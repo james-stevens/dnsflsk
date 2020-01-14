@@ -51,11 +51,11 @@ class Resolver:
 
         return None
 
-    def __init__(self, dns_name, dns_type, servers=["8.8.8.8"]):
-        self.servers = servers
+    def __init__(self, qry):
+        self.servers = qry["servers"]
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.expiry = 1
-        self.question = bytearray(dns.message.make_query(dns_name, dns_type).to_wire())
+        self.question = bytearray(dns.message.make_query(qry["name"], qry["type"], want_dnssec=qry["do"]).to_wire())
         if self.question is None:
             return None
 

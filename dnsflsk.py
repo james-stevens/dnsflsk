@@ -27,9 +27,13 @@ app = flask.Flask("DNS/Rest/api")
 @app.route('/dns/api/v1.0/resolv/', methods=['GET'])
 @app.route('/dns/api/v1.0/resolv', methods=['GET'])
 def resolver():
-    dns_name = flask.request.args.get("name")
-    dns_type = flask.request.args.get("type", default=1, type=int)
-    dns_servers = flask.request.args.get("servers", default="192.168.1.20")
+    qry = {}
+    qry["name"] = flask.request.args.get("name")
+    qry["type"] = flask.request.args.get("type", default=1, type=int)
+    qry["servers"] = flask.request.args.get("servers", default="192.168.1.20").split(",")
+    qry["ct"] = flask.request.args.get("ct",default=False,type=boolean)
+    qry["cd"] = flask.request.args.get("cd")
+    qry["do"] = flask.request.args.get("do",default=False,type=boolean)
 
     if dns_name is None:
         return abort(400, "'name' parameter is missing")
@@ -37,7 +41,7 @@ def resolver():
     if not is_valid_host(dns_name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
-    answer = resolv.Resolver(dns_name, dns_type, dns_servers.split(","))
+    answer = resolv.Resolver(qry)
     rec = answer.recv()
     if rec is None:
         return abort(400, "No valid answer received")
