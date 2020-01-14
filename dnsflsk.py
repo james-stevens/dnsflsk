@@ -29,6 +29,7 @@ app = flask.Flask("DNS/Rest/api")
 def resolver():
     dns_name = flask.request.args.get("name")
     dns_type = flask.request.args.get("type", default=1, type=int)
+    dns_servers = flask.request.args.get("servers", default="192.168.1.20")
 
     if dns_name is None:
         return abort(400, "'name' parameter is missing")
@@ -36,7 +37,7 @@ def resolver():
     if not is_valid_host(dns_name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
-    answer = resolv.Resolver(dns_name, dns_type, servers=["192.168.1.20"])
+    answer = resolv.Resolver(dns_name, dns_type, dns_servers.split(","))
     rec = answer.recv()
     if rec is None:
         return abort(400, "No valid answer received")
