@@ -1,7 +1,11 @@
 #! /usr/bin/python3
 
+import resolv
+
 import flask
 import dns
+import dns.rdatatype
+import dns.resolver
 import re
 
 is_valid_host_re = re.compile(r'^([0-9a-z][-\w]*[0-9a-z]\.)+[a-z0-9\-]{2,15}$')
@@ -32,7 +36,12 @@ def resolver():
     if not is_valid_host(dns_name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
-    return flask.jsonify({"name": dns_name, "type": dns_type})
+    answer = resolv.Resolver(dns_name, dns_type, servers=["192.168.1.20"])
+    rec = answer.recv()
+    if rec is None:
+        return abort(400, "No valid answer received")
+
+    return flask.jsonify(rec)
 
 
 @app.route("/dns/api/v1.0/")
