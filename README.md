@@ -13,6 +13,7 @@ It's mostly just for fun, but if you find it useful - cool.
 If you feel like it, leave a comment in the [first issue](https://github.com/james-stevens/dnsflsk/issues/1) called `Just for chatting`
 
 
+
 # Additional Option
 
 In addition to the [Google Supported Parameters](https://developers.google.com/speed/public-dns/docs/doh/json#supported_parameters)
@@ -20,10 +21,11 @@ In addition to the [Google Supported Parameters](https://developers.google.com/s
 you want your query sent to.
 
 
-# Work-in-progress
 
-Currently this is massively a work-in-progress, so the `master` branch will change (probably daily),
-but I will try and keep it stable - i.e. it works.
+# Status
+
+The code works, but could do with a lot of additional work to make it more defensive.
+
 
 
 # Running at Production Quality
