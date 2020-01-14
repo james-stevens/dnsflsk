@@ -1,0 +1,6 @@
+#! /bin/bash
+
+export PATH=$PATH:/opt/python/bin
+
+gunicorn --bind unix:/var/tmp/dnsflsk.sock wsgi
+
