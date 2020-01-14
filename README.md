@@ -30,10 +30,10 @@ but I will try and keep it stable - i.e. it works.
 
 To run this at production quality, I used `gunicorn` and `nginx`.
 
-# Copy (or symlink) `nginx.conf` into the `${NGINX_BASE_DIR}/conf/dnsflsk.conf`
-# Run `nginx -t -c conf/dnsflsk.conf` to check its OK
-# Start Nginx with `nginx -c conf/dnsflsk.conf`
-# Start WSGI/gunicorn with `./start_wsgi`
+* Copy (or symlink) `nginx.conf` into the `${NGINX_BASE_DIR}/conf/dnsflsk.conf`
+* Run `nginx -t -c conf/dnsflsk.conf` to check its OK
+* Start Nginx with `nginx -c conf/dnsflsk.conf`
+* Start WSGI/gunicorn with `./start_wsgi`
 
 Now, from another ssh, you should be able to run something like
 
