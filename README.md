@@ -46,26 +46,25 @@ If it works, you'll see something like this
 ```
 $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com&type=1&servers=8.8.4.4' 2>/dev/null | jq
 {
-    "AD": false,
-    "Answer": [
-        {
-            "data": "216.58.204.228",
-            "name": "www.google.com.",
-            "type": 1
-        }
-    ],
-    "Authority": [],
-    "CD": false,
-    "Question": [
-        {
-            "name": "www.google.com.",
-            "type": 1
-        }
-    ],
-    "RA": true,
-    "RD": true,
-    "Status": 0,
-    "TC": false
+  "AD": false,
+  "Answer": [
+    {
+      "data": "216.58.206.100",
+      "name": "www.google.com.",
+      "type": 1
+    }
+  ],
+  "Authority": [],
+  "CD": false,
+  "Question": [
+    {
+      "name": "www.google.com.",
+      "type": 1
+    }
+  ],
+  "RA": true,
+  "RD": true,
+  "Status": 0,
+  "TC": false
 }
 ```
-
