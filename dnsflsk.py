@@ -45,7 +45,7 @@ def resolver():
     if not is_valid_host(qry.name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
-    if hasattr(qry, "type") or qry.rdtype is None:
+    if (not hasattr(qry, "rdtype")) or qry.rdtype is None:
         qry.rdtype = 1
     elif qry.rdtype.isdigit():
         qry.rdtype = int(qry.rdtype)
