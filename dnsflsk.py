@@ -51,7 +51,7 @@ def resolver():
         try:
             qry["type"] = dns.rdatatype.from_text(qry["type"])
         except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
-            return abort(400, "'type' parameter has an invalid value")
+            return abort(400, "'type' parameter is not a known RR name")
 
     answer = resolv.Resolver(qry)
     rec = answer.recv()
