@@ -28,7 +28,7 @@ application = flask.Flask("DNS/Rest/api")
 def resolver():
     qry = {}
     qry["name"] = flask.request.args.get("name")
-    qry["type"] = flask.request.args.get("type", default=1, type=int)
+    qry["type"] = flask.request.args.get("type")
     qry["servers"] = flask.request.args.get("servers",
                                             default="192.168.1.20").split(",")
     qry["ct"] = flask.request.args.get("ct", default=False, type=bool)
@@ -40,6 +40,18 @@ def resolver():
 
     if not is_valid_host(qry["name"]):
         return abort(400, "'name' parameter is not a valid FQDN")
+
+    if "type" not in qry or qry["type"] is None:
+        qry["type"] = 1
+    elif qry["type"].isdigit():
+        qry["type"] = int(qry["type"])
+        if qry["type"] <= 0 or qry["type"] >= 65535:
+            return abort(400, "'type' parameter is out of range")
+    else:
+        try:
+            qry["type"] = dns.rdatatype.from_text(qry["type"])
+        except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
+            return abort(400, "'type' parameter has an invalid value")
 
     answer = resolv.Resolver(qry)
     rec = answer.recv()
