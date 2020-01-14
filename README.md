@@ -9,10 +9,11 @@ I'm using ...
 * Flask - v1.1.1
 
 It's mostly just for fun, but if you find it useful - cool.
+
 If you feel like it, leave a comment in the [first issue](https://github.com/james-stevens/dnsflsk/issues/1) called `Just for chatting`
 
 
 # Work-in-progress
 
 Currently this is massively a work-in-progress, so the `master` branch will change (probably daily),
-but I will try and keep it stable -i.e. it works.
+but I will try and keep it stable - i.e. it works.
