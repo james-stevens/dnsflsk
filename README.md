@@ -13,6 +13,13 @@ It's mostly just for fun, but if you find it useful - cool.
 If you feel like it, leave a comment in the [first issue](https://github.com/james-stevens/dnsflsk/issues/1) called `Just for chatting`
 
 
+# Additional Option
+
+In addition to the [Google Supported Parameters](https://developers.google.com/speed/public-dns/docs/doh/json#supported_parameters)
+, this API also supports the paramter `servers` as a comma separated list of DNS servers
+you want your query sent to.
+
+
 # Work-in-progress
 
 Currently this is massively a work-in-progress, so the `master` branch will change (probably daily),
