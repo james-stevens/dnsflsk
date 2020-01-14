@@ -44,7 +44,7 @@ If you fail to start the WSGI agent, you will get an HTTP `502 Bad Gateway` mess
 
 If it works, you'll see something like this
 ```
-$ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com&type=1&servers=8.8.4.4' 2>/dev/null | python3 -m json.tool
+$ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com&type=1&servers=8.8.4.4' 2>/dev/null | jq
 {
     "AD": false,
     "Answer": [
