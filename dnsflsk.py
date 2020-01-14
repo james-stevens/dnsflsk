@@ -31,14 +31,14 @@ def resolver():
     qry["type"] = flask.request.args.get("type", default=1, type=int)
     qry["servers"] = flask.request.args.get("servers",
                                             default="192.168.1.20").split(",")
-    qry["ct"] = flask.request.args.get("ct", default=False, type=boolean)
+    qry["ct"] = flask.request.args.get("ct", default=False, type=bool)
     qry["cd"] = flask.request.args.get("cd")
-    qry["do"] = flask.request.args.get("do", default=False, type=boolean)
+    qry["do"] = flask.request.args.get("do", default=False, type=bool)
 
-    if dns_name is None:
+    if "name" not in qry:
         return abort(400, "'name' parameter is missing")
 
-    if not is_valid_host(dns_name):
+    if not is_valid_host(qry["name"]):
         return abort(400, "'name' parameter is not a valid FQDN")
 
     answer = resolv.Resolver(qry)
