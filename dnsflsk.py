@@ -21,10 +21,10 @@ def abort(err_no, message):
     return response
 
 
-app = flask.Flask("DNS/Rest/api")
+application = flask.Flask("DNS/Rest/api")
 
 
-@app.route('/dns/api/v1.0/resolv', methods=['GET'])
+@application.route('/dns/api/v1.0/resolv', methods=['GET'])
 def resolver():
     qry = {}
     qry["name"] = flask.request.args.get("name")
@@ -49,16 +49,16 @@ def resolver():
     return flask.jsonify(rec)
 
 
-@app.route("/dns/api/v1.0/")
-@app.route("/dns/api/v1.0")
+@application.route("/dns/api/v1.0/")
+@application.route("/dns/api/v1.0")
 def v1():
     return "Welcome to the DNS/API v1.0"
 
 
-@app.route("/")
+@application.route("/")
 def hello():
     return "Welcome to the DNS/API"
 
 
 if __name__ == "__main__":
-    app.run()
+    application.run()

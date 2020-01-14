@@ -8,6 +8,6 @@ c = resolv.Resolver({
     "name": sys.argv[1],
     "type": int(sys.argv[2]),
     "do": True,
-    "servers": ["192.168.1.20"]
+    "servers": ["8.8.8.8"]
 })
 print(json.dumps(c.recv(), indent=3))
