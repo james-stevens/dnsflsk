@@ -14,32 +14,6 @@ MAX_EXPIRY = 30
 
 
 class Resolver:
-    def encode_query(self, dns_name, dns_type):
-        try:
-            self.asked = dns.name.from_text(dns_name)
-        except:
-            return None
-
-        ba = list(self.asked.to_wire())
-
-        sz = len(ba) + DNS_HDR_LEN + 4
-        pkt = bytearray(sz)
-
-        p = DNS_HDR_LEN
-        for c in ba:
-            pkt[p] = c
-            p = p + 1
-
-        pkt[2] = 1  # RD=1
-        pkt[5] = 1  # qcount=1
-
-        p = len(ba) + DNS_HDR_LEN
-        pkt[p] = (dns_type & 0xff00) >> 8
-        pkt[p + 1] = dns_type & 0xff
-        pkt[p + 3] = 1  # CLASS=IN
-
-        return pkt
-
     def send_all(self):
         ret = False
         for s in self.servers:
@@ -81,7 +55,7 @@ class Resolver:
         self.servers = servers
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.expiry = 1
-        self.question = self.encode_query(dns_name, dns_type)
+        self.question = bytearray(dns.message.make_query(dns_name, dns_type).to_wire())
         if self.question is None:
             return None
 
