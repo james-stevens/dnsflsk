@@ -24,7 +24,6 @@ def abort(err_no, message):
 app = flask.Flask("DNS/Rest/api")
 
 
-@app.route('/dns/api/v1.0/resolv/', methods=['GET'])
 @app.route('/dns/api/v1.0/resolv', methods=['GET'])
 def resolver():
     qry = {}
