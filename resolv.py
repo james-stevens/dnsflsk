@@ -14,6 +14,17 @@ MAX_EXPIRY = 30
 
 
 class Resolver:
+    def __init__(self, qry):
+        self.servers = qry["servers"]
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.expiry = 1
+        self.question = bytearray(
+            dns.message.make_query(qry["name"],
+                                   qry["type"],
+                                   want_dnssec=qry["do"]).to_wire())
+        if self.question is None:
+            return None
+
     def send_all(self):
         ret = False
         for s in self.servers:
@@ -33,6 +44,10 @@ class Resolver:
 
         return self.send_all()
 
+    def match_id(self):
+        return (self.id is not None and self.reply[0] == self.id[0]
+                and self.reply[1] == self.id[1])
+
     def recv(self):
         while True:
             if not self.send():
@@ -42,6 +57,7 @@ class Resolver:
                                                 self.expiry)
             if len(rlist) > 0:
                 break
+            self.expiry = self.expiry + self.expiry
             if self.expiry > MAX_EXPIRY:
                 return None
 
@@ -50,21 +66,6 @@ class Resolver:
             return self.decode_reply()
 
         return None
-
-    def __init__(self, qry):
-        self.servers = qry["servers"]
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.expiry = 1
-        self.question = bytearray(
-            dns.message.make_query(qry["name"],
-                                   qry["type"],
-                                   want_dnssec=qry["do"]).to_wire())
-        if self.question is None:
-            return None
-
-    def match_id(self):
-        return (self.id is not None and self.reply[0] == self.id[0]
-                and self.reply[1] == self.id[1])
 
     def decode_reply(self):
         x = dns.message.from_wire(self.reply)
