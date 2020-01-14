@@ -15,13 +15,12 @@ MAX_EXPIRY = 30
 
 class Resolver:
     def __init__(self, qry):
-        self.servers = qry["servers"]
+        self.servers = qry.servers
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.expiry = 1
         self.question = bytearray(
-            dns.message.make_query(qry["name"],
-                                   qry["type"],
-                                   want_dnssec=qry["do"]).to_wire())
+            dns.message.make_query(qry.name, qry.rdtype,
+                                   want_dnssec=qry.do).to_wire())
         if self.question is None:
             return None
 

@@ -11,6 +11,10 @@ import re
 is_valid_host_re = re.compile(r'^([0-9a-z][-\w]*[0-9a-z]\.)+[a-z0-9\-]{2,15}$')
 
 
+class Empty:
+    pass
+
+
 def is_valid_host(host):
     return is_valid_host_re.match(host) is not None
 
@@ -26,30 +30,30 @@ application = flask.Flask("DNS/Rest/api")
 
 @application.route('/dns/api/v1.0/resolv', methods=['GET'])
 def resolver():
-    qry = {}
-    qry["name"] = flask.request.args.get("name")
-    qry["type"] = flask.request.args.get("type")
-    qry["servers"] = flask.request.args.get("servers",
-                                            default="192.168.1.20").split(",")
-    qry["ct"] = flask.request.args.get("ct", default=False, type=bool)
-    qry["cd"] = flask.request.args.get("cd")
-    qry["do"] = flask.request.args.get("do", default=False, type=bool)
+    qry = Empty()
+    qry.name = flask.request.args.get("name")
+    qry.rdtype = flask.request.args.get("type")
+    qry.servers = flask.request.args.get("servers",
+                                         default="192.168.1.20").split(",")
+    qry.ct = flask.request.args.get("ct", default=False, type=bool)
+    qry.cd = flask.request.args.get("cd")
+    qry.do = flask.request.args.get("do", default=False, type=bool)
 
-    if "name" not in qry:
+    if not hasattr(qry, "name"):
         return abort(400, "'name' parameter is missing")
 
-    if not is_valid_host(qry["name"]):
+    if not is_valid_host(qry.name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
-    if "type" not in qry or qry["type"] is None:
-        qry["type"] = 1
-    elif qry["type"].isdigit():
-        qry["type"] = int(qry["type"])
-        if qry["type"] <= 0 or qry["type"] >= 65535:
+    if hasattr(qry, "type") or qry.rdtype is None:
+        qry.rdtype = 1
+    elif qry.rdtype.isdigit():
+        qry.rdtype = int(qry.rdtype)
+        if qry.rdtype <= 0 or qry.rdtype >= 65535:
             return abort(400, "'type' parameter is out of range")
     else:
         try:
-            qry["type"] = dns.rdatatype.from_text(qry["type"])
+            qry.rdtype = dns.rdatatype.from_text(qry.rdtype)
         except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
             return abort(400, "'type' parameter is not a known RR name")
 
