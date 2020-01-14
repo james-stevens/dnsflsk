@@ -4,6 +4,8 @@ import socket
 import select
 import os
 import dns
+import dns.name
+import dns.message
 
 DNS_HDR_LEN = 12
 DNS_MAX_RESP = 4096
@@ -46,6 +48,8 @@ class Resolver:
         return ret
 
     def send(self):
+        if self.question is None:
+            return None
         self.question[0] = 0
         self.question[1] = 0
         while self.question[0] == 0 and self.question[1] == 0:
@@ -102,13 +106,13 @@ class Resolver:
         } for rr in x.question]
         out["Answer"] = [{
             "name": rr.name.to_text(),
-            "data": v.to_text(),
+            "data": i.to_text(),
             "type": rr.rdtype
-        } for rr in x.answer for v in rr]
+        } for rr in x.answer for i in rr]
         out["Authority"] = [{
             "name": rr.name.to_text(),
-            "data": v.to_text(),
+            "data": i.to_text(),
             "type": rr.rdtype
-        } for rr in x.authority for v in rr]
+        } for rr in x.authority for i in rr]
 
         return out
