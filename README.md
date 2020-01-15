@@ -35,7 +35,7 @@ response you get will be the first one received.
 
 # Status
 
-The code works, but could do with a lot of additional work to make it more defensive.
+The code works, but I'll probably keep updating it, if I can think of anything else. or in response to feedback / bugs.
 
 
 
