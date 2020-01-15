@@ -1,6 +1,12 @@
 # dnsflsk
-This is an HTTPS/JSON <-> DNS proxy following the [Google JSON/DNS/API](https://developers.google.com/speed/public-dns/docs/doh/json),
-using `Flask` and `dnspython` to do the heavy lifting.
+
+This is a Rest/API DNS proxy following the [Google JSON/DNS/API](https://developers.google.com/speed/public-dns/docs/doh/json) spec.
+Implemented using `Flask` and `dnspython` to do the heavy lifting.
+
+It allows you to issue JSON DNS queries and get JSON responses, with the DNS done using an 
+underlying UDP client socket.
+
+Its really should be ASGI, but its currently WSGI.
 
 I'm using ...
 
@@ -17,9 +23,9 @@ If you feel like it, leave a comment in the [first issue](https://github.com/jam
 # Additional Option
 
 In addition to the [Google Supported Parameters](https://developers.google.com/speed/public-dns/docs/doh/json#supported_parameters)
-, this API also supports the paramter `servers` as a comma separated list of DNS servers you want your query sent to.
+, this API also supports the parameter `servers` as a comma separated list of DNS servers you want your query sent to.
 
-And I've addded in the attribute `Responder` into the JSON reply, with the IP Address of the server that responded.
+And I've added in the attribute `Responder` into the JSON reply, with the IP Address of the server that responded.
 
 If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google).
 
