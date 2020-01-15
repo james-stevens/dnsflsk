@@ -37,7 +37,7 @@ c = resolv.Resolver(args)
 ret = c.recv()
 if ret is None:
     print("Lookup failed")
-    sys.exit(1)
+    sys.exit(32)
 else:
-    print(json.dumps(c.recv(), indent=3))
-    sys.exit(0)
+    print(json.dumps(ret, indent=3))
+    sys.exit(ret["Status"])
