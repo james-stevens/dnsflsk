@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser(description='Process some integers.')
 
 parser.add_argument("-s",
                     '--servers',
+                    default="8.8.8.8,8.8.4.4",
                     help='Comma separated list of server ip addresses')
 
 parser.add_argument("-t",
@@ -33,8 +34,9 @@ args = parser.parse_args()
 
 args.servers = args.servers.split(",")
 
-c = resolv.Resolver(args)
-ret = c.recv()
+res = resolv.Resolver(args)
+
+ret = res.recv()
 if ret is None:
     print("Lookup failed")
     sys.exit(32)

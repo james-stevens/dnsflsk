@@ -17,9 +17,14 @@ If you feel like it, leave a comment in the [first issue](https://github.com/jam
 # Additional Option
 
 In addition to the [Google Supported Parameters](https://developers.google.com/speed/public-dns/docs/doh/json#supported_parameters)
-, this API also supports the paramter `servers` as a comma separated list of DNS servers
-you want your query sent to.
+, this API also supports the paramter `servers` as a comma separated list of DNS servers you want your query sent to.
 
+And I've addded in the attribute `Responder` into the JSON reply, with the IP Address of the server that responded.
+
+If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google).
+
+When more than one server is specified, your query will be sent to all the `servers`, and the
+response you get will be the first one received.
 
 
 # Status
@@ -32,10 +37,13 @@ The code works, but could do with a lot of additional work to make it more defen
 
 To run this at production quality, I used `gunicorn` and `nginx`.
 
+* `pip install gunicorn` (if you don't already have it)
 * Copy (or symlink) `nginx.conf` into the `${NGINX_BASE_DIR}/conf/dnsflsk.conf`
 * Run `nginx -t -c conf/dnsflsk.conf` to check its OK
 * Start Nginx with `nginx -c conf/dnsflsk.conf`
 * Start WSGI/gunicorn with `./start_wsgi`
+
+For `start_wsgi` to work, you may need to ensure `gunicorn` is in your run-path, or edit the script.
 
 Now, from another ssh, you should be able to run something like
 

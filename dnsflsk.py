@@ -1,22 +1,16 @@
 #! /usr/bin/python3
 
 import resolv
+import validation
 
 import flask
 import dns
 import dns.rdatatype
 import dns.resolver
-import re
-
-is_valid_host_re = re.compile(r'^([0-9a-z][-\w]*[0-9a-z]\.)+[a-z0-9\-]{2,15}$')
 
 
 class Empty:
     pass
-
-
-def is_valid_host(host):
-    return is_valid_host_re.match(host) is not None
 
 
 def abort(err_no, message):
@@ -33,16 +27,20 @@ def resolver():
     qry = Empty()
     qry.name = flask.request.args.get("name")
     qry.rdtype = flask.request.args.get("type")
-    qry.servers = flask.request.args.get("servers",
-                                         default="192.168.1.20").split(",")
+    qry.servers = flask.request.args.get("servers", default="8.8.8.8,8.8.4.4")
     qry.ct = flask.request.args.get("ct", default=False, type=bool)
     qry.cd = flask.request.args.get("cd")
     qry.do = flask.request.args.get("do", default=False, type=bool)
 
+    qry.servers = qry.servers.split(",")
+    for s in qry.servers:
+        if not validation.is_valid_ipv4(s):
+            return abort(400, "Bad server IPv4 Address")
+
     if not hasattr(qry, "name"):
         return abort(400, "'name' parameter is missing")
 
-    if not is_valid_host(qry.name):
+    if not validation.is_valid_host(qry.name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
     if (not hasattr(qry, "rdtype")) or qry.rdtype is None:
@@ -57,8 +55,12 @@ def resolver():
         except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
             return abort(400, "'type' parameter is not a known RR name")
 
-    answer = resolv.Resolver(qry)
-    rec = answer.recv()
+    try:
+        res = resolv.Resolver(qry)
+    except Exception as e:
+        return abort(400, e)
+
+    rec = res.recv()
     if rec is None:
         return abort(400, "No valid answer received")
 
