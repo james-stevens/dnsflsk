@@ -1,9 +1,12 @@
 #! /usr/bin/python3
 
 import resolv
+
+import socket
 import sys
 import json
 import argparse
+import validation
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 
@@ -14,6 +17,7 @@ parser.add_argument("-s",
 
 parser.add_argument("-t",
                     '--rdtype',
+                    default=1,
                     help='Record type to query (number or name), default=A')
 
 parser.add_argument("-n", '--name', help='Name to look-up')
@@ -33,6 +37,7 @@ parser.add_argument("-c",
 args = parser.parse_args()
 
 args.servers = args.servers.split(",")
+args.servers = [resolv.resolv_host(s) for s in args.servers]
 
 res = resolv.Resolver(args)
 

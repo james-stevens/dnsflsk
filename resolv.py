@@ -16,6 +16,14 @@ MAX_CLIENTS = 10
 MAX_TRIES = 5
 
 
+def resolv_host(server):
+    if validation.is_valid_ipv4(server):
+        return server
+    if validation.is_valid_host(server):
+        return socket.gethostbyname(server)
+    return None
+
+
 class Resolver:
     def __init__(self, qry):
         if not validation.is_valid_host(qry.name):
@@ -58,7 +66,7 @@ class Resolver:
             except Exception as e:
                 pass
 
-        return ret # True if at least one worked
+        return ret  # True if at least one worked
 
     def send(self):
         if self.question is None:
@@ -90,6 +98,8 @@ class Resolver:
                 self.reply, (addr, port) = self.sock.recvfrom(DNS_MAX_RESP)
                 if self.match_id():
                     ret = self.decode_reply()
+                    if ret is None:
+                        return None
                     ret["Responder"] = addr
                     self.sock.close()
                     return ret
@@ -104,6 +114,9 @@ class Resolver:
 
     def decode_reply(self):
         x = dns.message.from_wire(self.reply)
+        if (x.flags & 0x8000) == 0:
+            return None  # REPLY flag not set
+
         out = {}
 
         out["Status"] = x.rcode()
@@ -112,6 +125,8 @@ class Resolver:
         out["CD"] = (x.flags & 0x20) != 0
         out["RD"] = (x.flags & 0x0100) != 0
         out["TC"] = (x.flags & 0x0200) != 0
+        out["AA"] = (x.flags & 0x0400) != 0
+        out["QR"] = (x.flags & 0x8000) != 0
 
         out["Question"] = [{
             "name": rr.name.to_text(),

@@ -11,6 +11,9 @@ def is_valid_host(host):
 
 
 def is_valid_ipv4(address):
+    if address is None:
+        return False
+
     try:
         socket.inet_pton(socket.AF_INET, address)
     except AttributeError:  # no inet_pton here, sorry

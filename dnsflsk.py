@@ -33,6 +33,8 @@ def resolver():
     qry.do = flask.request.args.get("do", default=False, type=bool)
 
     qry.servers = qry.servers.split(",")
+    qry.servers = [resolv.resolv_host(s) for s in qry.servers]
+
     for s in qry.servers:
         if not validation.is_valid_ipv4(s):
             return abort(400, "Bad server IPv4 Address")
