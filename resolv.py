@@ -139,11 +139,13 @@ class Resolver:
             "name": rr.name.to_text(),
             "type": rr.rdtype
         } for rr in x.question]
+
         out["Answer"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
             "type": rr.rdtype
         } for rr in x.answer for i in rr]
+
         out["Authority"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
