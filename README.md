@@ -66,14 +66,19 @@ If it works, you'll see something like this
 ```
 $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/null | jq
 {
-  "Status": 0,
-  "RA": true,
-  "AD": false,
-  "CD": false,
-  "RD": true,
-  "TC": false,
-  "AA": false,
   "QR": true,
+  "AA": false,
+  "TC": false,
+  "RD": true,
+  "CD": false,
+  "AD": false,
+  "RA": true,
+  "Flags": [
+    "QR",
+    "RD",
+    "RA"
+  ],
+  "Status": 0,
   "Question": [
     {
       "name": "www.google.com.",
@@ -83,7 +88,7 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/nul
   "Answer": [
     {
       "name": "www.google.com.",
-      "data": "216.58.205.36",
+      "data": "216.58.210.36",
       "type": 1
     }
   ],
