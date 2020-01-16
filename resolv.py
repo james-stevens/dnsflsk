@@ -10,9 +10,7 @@ import dns.name
 import dns.message
 import dns.rdatatype
 
-DNS_HDR_LEN = 12
 DNS_MAX_RESP = 4096
-MAX_CLIENTS = 10
 MAX_TRIES = 5
 DNS_FLAGS = {
     "QR": 0x8000,
