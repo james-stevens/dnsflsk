@@ -14,6 +14,15 @@ DNS_HDR_LEN = 12
 DNS_MAX_RESP = 4096
 MAX_CLIENTS = 10
 MAX_TRIES = 5
+DNS_FLAGS = {
+    "QR": 0x8000,
+    "AA": 0x0400,
+    "TC": 0x0200,
+    "RD": 0x0100,
+    "CD": 0x20,
+    "AD": 0x40,
+    "RA": 0x80
+}
 
 
 def resolv_host(server):
@@ -119,14 +128,14 @@ class Resolver:
 
         out = {}
 
+        for flag in DNS_FLAGS:
+            out[flag] = (x.flags & DNS_FLAGS[flag]) != 0
+
+        out["Flags"] = [
+            flag for flag in DNS_FLAGS if ((x.flags & DNS_FLAGS[flag]) != 0)
+        ]
+
         out["Status"] = x.rcode()
-        out["RA"] = (x.flags & 0x80) != 0
-        out["AD"] = (x.flags & 0x40) != 0
-        out["CD"] = (x.flags & 0x20) != 0
-        out["RD"] = (x.flags & 0x0100) != 0
-        out["TC"] = (x.flags & 0x0200) != 0
-        out["AA"] = (x.flags & 0x0400) != 0
-        out["QR"] = (x.flags & 0x8000) != 0
 
         out["Question"] = [{
             "name": rr.name.to_text(),
