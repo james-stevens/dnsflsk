@@ -3,6 +3,8 @@
 This is a Rest/API DNS proxy following the [Google JSON/DNS/API](https://developers.google.com/speed/public-dns/docs/doh/json) spec,
 AKA [DoH or DNS over HTTPS](https://developers.google.com/speed/public-dns/docs/doh/index).  Implemented using `Flask` and `dnspython` to do the heavy lifting.
 
+Google also supports sending binary DNS query packets to their service. This does not.
+
 It allows you to issue JSON DNS queries and get JSON responses, with the DNS done using an 
 underlying UDP client socket.  It really should be ASGI, but its currently WSGI.
 
