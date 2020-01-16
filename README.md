@@ -11,27 +11,25 @@ underlying UDP client socket.  It really should be ASGI, but its currently WSGI.
 I've used ...
 
 * Python - v3.6.9
-* dnspython - v1.16.0
-* Flask - v1.1.1
+* dnspython - v1.16.0 (`pip install dnspython`)
+* Flask - v1.1.1 (`pip install Flask`)
 
 But it doesn't do anything tricky, so any reasonably recent version will probably work.
 
 If you feel like it, leave a comment in the [first issue](https://github.com/james-stevens/dnsflsk/issues/1) called `Just for chatting`
 
 
+# Status
 
-# Additional Options & Properties
+The code works, but I'll probably keep updating it, if I can think of anything else, or in response to feedback / bugs.
+
+
+# Additional Options
 
 In addition to the [Google Supported Parameters](https://developers.google.com/speed/public-dns/docs/doh/json#supported_parameters)
 , this API also supports the parameter `servers` as a comma separated list of DNS servers you want your query sent to.
 Each server can be specified as either a name or IPv4 address. Names will be resolved using your server's default resolution mechanism
 (i.e. the same as the command line).
-
-I've added in the property `Responder` into the JSON reply, with the IP Address of the server that responded.
-It will also return the [flags](https://tools.ietf.org/html/rfc2065#section-6.1) `AA` and `QR`,
-although `QR` must always be `True` as this is checked for in the code.
-
-The is also the property `Flags` which is an array listing which flags are set.
 
 If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google).
 
@@ -39,9 +37,15 @@ When more than one server is specified, your query will be sent to all the `serv
 response you get will be the first one received (as speciifed in the `Responder` property.
 
 
-# Status
+# Additional Properties
 
-The code works, but I'll probably keep updating it, if I can think of anything else, or in response to feedback / bugs.
+I've added in the property `Responder` into the JSON reply, with the IP Address of the server that responded.
+
+It will also return the [flags](https://tools.ietf.org/html/rfc2065#section-6.1) `AA` and `QR`,
+although `QR` must always be `True` as this is checked for in the code.
+
+There is also the property `Flags` which is an array listing which flags are `True`.
+
 
 
 
