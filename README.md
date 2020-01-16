@@ -27,7 +27,7 @@ In addition to the [Google Supported Parameters](https://developers.google.com/s
 Each server can be specified as either a name or IPv4 address. Names will be resolved using your server's default resolution mechanism
 (i.e. the same as the command line).
 
-I've added in the property. `Responder` into the JSON reply, with the IP Address of the server that responded.
+I've added in the property `Responder` into the JSON reply, with the IP Address of the server that responded.
 It will also return the [flags](https://tools.ietf.org/html/rfc2065#section-6.1) `AA` and `QR`,
 although `QR` must always be `True` as this is checked for in the code.
 
