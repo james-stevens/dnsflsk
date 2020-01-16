@@ -29,6 +29,8 @@ I've added in the property. `Responder` into the JSON reply, with the IP Address
 It will also return the [flags](https://tools.ietf.org/html/rfc2065#section-6.1) `AA` and `QR`,
 although `QR` must always be `True` as this is checked for in the code.
 
+The is also the property `Flags` which is an array listing which flags are set.
+
 If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google).
 
 When more than one server is specified, your query will be sent to all the `servers`, and the

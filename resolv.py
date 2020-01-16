@@ -131,9 +131,7 @@ class Resolver:
         for flag in DNS_FLAGS:
             out[flag] = (x.flags & DNS_FLAGS[flag]) != 0
 
-        out["Flags"] = [
-            flag for flag in DNS_FLAGS if ((x.flags & DNS_FLAGS[flag]) != 0)
-        ]
+        out["Flags"] = [flag for flag in DNS_FLAGS if out[flag]]
 
         out["Status"] = x.rcode()
 
