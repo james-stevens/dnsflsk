@@ -20,7 +20,7 @@ parser.add_argument("-t",
                     default=1,
                     help='Record type to query (number or name), default=A')
 
-parser.add_argument("-n", '--name', help='Name to look-up')
+parser.add_argument("-n", '--name', required=True, help='Name to look-up')
 
 parser.add_argument("-d",
                     '--do',

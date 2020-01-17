@@ -49,6 +49,35 @@ although `QR` must always be `True` as this is checked for in the code.
 There is also the property `Flags` which is an array listing which flags are `True`.
 
 
+# Testing it Out
+
+You can run it in the basic `Flask` HTTP server, but running `./dnsflsk.py` and it will answer queries on `http://127.0.0.1:5000`
+
+e.g.
+```
+$ curl 'http://127.0.0.1:5000/dns/api/v1.0/resolv?name=www.google.com'
+```
+
+Note: This form of executaion is not suitable for production use, see below.
+
+You can also test out just the resolver code, using the command line utility `cmdresolv.py`. The only required parameter is `-n <name>`.
+
+```
+usage: cmdresolv.py [-h] [-s SERVERS] [-t RDTYPE] [-n NAME] [-d] [-c]
+
+Process some integers.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s SERVERS, --servers SERVERS
+                        Comma separated list of server ip addresses
+  -t RDTYPE, --rdtype RDTYPE
+                        Record type to query (number or name), default=A
+  -n NAME, --name NAME  Name to look-up
+  -d, --do              Set DO bit
+  -c, --cd              Same as --do
+
+```
 
 
 # Running at Production Quality
@@ -63,7 +92,7 @@ I've also supplied all the extra files you'd need to run this at production qual
 
 For `start_wsgi` to work, you may need to ensure `gunicorn` is in your run-path, or edit the script.
 
-Now, from another ssh, you should be able to run something like
+Then, from another ssh, you should be able to run something like
 
 ```
 $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
@@ -105,6 +134,7 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/nul
 }
 ```
 
+
 # Runnning in a Production Docker Container
 
 I've created a base container image called [`jamesstevens/mini-slack142-gunicorn-nginx`](https://hub.docker.com/repository/docker/jamesstevens/mini-slack142-gunicorn-nginx)
@@ -113,13 +143,13 @@ that has `nginx` and `Python` in it, and then created an application container t
 All you need to do is
 
 * Have a current `docker` platform :)
-* Run `docker pull jamesstevens/mini-slack142-gunicorn-nginx:v1.2` to get the base image
+* Run `docker pull jamesstevens/mini-slack142-gunicorn-nginx:v1.2` to get the base container (optional)
 * Run `docker image build -t dnsflsk .` to build the application container (must be run in a directory containing a clone of this project)
 * Run `docker run -p 800:800 --tmpfs=/ram dnsflsk /bin/init` to run it
 
-This will run `dnsflsk` in `gunicorn` and `nginx` under the very basic, but still very good, supervisor program `SysV-Init`
+This will run `dnsflsk` (under `gunicorn`) and `nginx` under the very basic, but still very good, supervisor program `sysvinit`
 
-If you add `-t` after the `run` you will get soem commentary. It should look something like this...
+If you add `-t` after the `run` you will get some commentary. It should look something like this...
 ```
 INIT: version 2.88 booting
 INIT: Entering runlevel: 3
@@ -134,5 +164,5 @@ Then, once again, a command like this should test it works
 $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
 ```
 
-You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py` from the shell.
+You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py -n www.google.com` from the container's shell.
 You can, of course, also (instead) invoke `cmdresolv.py` directly from the `docker run` command.
