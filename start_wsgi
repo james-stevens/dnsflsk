@@ -2,5 +2,8 @@
 
 export PATH=$PATH:/opt/python/bin
 
-gunicorn --bind unix:/var/tmp/dnsflsk.sock wsgi
+# needed when run in the container
+if test -d /ram/. ; then mkdir -p /ram/var/run; fi
+if test -d /app; then cd /app; fi
 
+exec gunicorn --bind unix:/var/run/dnsflsk.sock wsgi

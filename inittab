@@ -1,0 +1,4 @@
+id:3:initdefault:
+
+ng:3:respawn:/app/start_nginx
+ws:3:respawn:/app/start_wsgi

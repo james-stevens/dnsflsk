@@ -14,6 +14,8 @@ I've used ...
 * dnspython - v1.16.0 (`pip install dnspython`)
 * Flask - v1.1.1 (`pip install Flask`)
 
+Installing `nginx` or `Python` needs to be done using your O/S level install procedure.
+
 But it doesn't do anything tricky, so any reasonably recent version will probably work.
 
 If you feel like it, leave a comment in the [first issue](https://github.com/james-stevens/dnsflsk/issues/1) called `Just for chatting`
@@ -101,4 +103,33 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/nul
   "Authority": [],
   "Responder": "8.8.4.4"
 }
+```
+
+# Runnning in a Production Docker Container
+
+I've created a base container image called `jamesstevens/mini-slack142-gunicorn-nginx` that has `nginx` and `Python` in it,
+and then created an application container to run `dnsflsk` in that.
+
+All you need to do is
+
+* Have a current `docker` platform :)
+* Run `docker pull jamesstevens/mini-slack142-gunicorn-nginx:v1.2` to get the base image
+* Run `docker image build -t dnsflsk .` to build the application container (must be run in a directory containing a clone of this project)
+* Run `docker run -p 800:800 --tmpfs=/ram dnsflsk /bin/init` to run it
+
+This will run `dnsflsk` in `gunicorn` and `nginx` under the very basic, but still very good, supervisor program `SysV-Init`
+
+If you add `-t` after the `run` you will get soem commentary. It should look something like this...
+```
+INIT: version 2.88 booting
+INIT: Entering runlevel: 3
+[2020-01-17 16:27:34 +0000] [8] [INFO] Starting gunicorn 20.0.4
+[2020-01-17 16:27:34 +0000] [8] [INFO] Listening at: unix:/var/run/dnsflsk.sock (8)
+[2020-01-17 16:27:34 +0000] [8] [INFO] Using worker: sync
+[2020-01-17 16:27:34 +0000] [13] [INFO] Booting worker with pid: 13
+```
+
+Then, once again, a command like this should test it works
+```
+$ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
 ```
