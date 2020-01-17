@@ -107,8 +107,8 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/nul
 
 # Runnning in a Production Docker Container
 
-I've created a base container image called `jamesstevens/mini-slack142-gunicorn-nginx` that has `nginx` and `Python` in it,
-and then created an application container to run `dnsflsk` in that.
+I've created a base container image called [`jamesstevens/mini-slack142-gunicorn-nginx`](https://hub.docker.com/repository/docker/jamesstevens/mini-slack142-gunicorn-nginx)
+that has `nginx` and `Python` in it, and then created an application container to run `dnsflsk` in that.
 
 All you need to do is
 
