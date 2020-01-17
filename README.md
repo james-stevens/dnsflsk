@@ -133,3 +133,6 @@ Then, once again, a command like this should test it works
 ```
 $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
 ```
+
+You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py` from the shell.
+You can, of course, also (instead) invoke `cmdresolv.py` directly from the `docker run` command.
