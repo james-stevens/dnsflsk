@@ -167,5 +167,5 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
 You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py -n www.google.com` from the container's shell.
 You can, of course, also (instead) invoke `cmdresolv.py` directly from the `docker run` command.
 
-I've provided the scripts oneline shell scripts `dkmk` to build the app container and `dkrun <cmd>` to run the container, where `<cmd>` will
+I've provided the one-line shell scripts `dkmk` to build the app container and `dkrun <cmd>` to run the container, where `<cmd>` will
 probably be either `sh` to get a shell in the container or `init` to run `sysvinit` to start the application.
