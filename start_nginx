@@ -1,3 +1,5 @@
 #! /bin/sh
+# (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
+# Alternative license arrangements possible, contact me for more information
 
 exec /usr/local/nginx/sbin/nginx -c conf/dnsflsk.conf -g 'daemon off;'

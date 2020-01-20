@@ -1,4 +1,6 @@
 #! /bin/bash
+# (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
+# Alternative license arrangements are possible, contact me for more information
 
 export PATH=$PATH:/opt/python/bin
 
