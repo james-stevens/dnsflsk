@@ -137,13 +137,13 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/nul
 
 # Runnning in a Production Docker Container
 
-I've created a base container image called [`jamesstevens/mini-slack142-gunicorn-nginx`](https://hub.docker.com/repository/docker/jamesstevens/mini-slack142-gunicorn-nginx)
+I've created a base container image called [`jamesstevens/mini-slack142-py38-nginx`](https://hub.docker.com/repository/docker/jamesstevens/jamesstevens/mini-slack142-py38-nginx)
 that has `nginx` and `Python` in it, and then created an application container to run `dnsflsk` in that.
 
 All you need to do is
 
 * Have a current `docker` platform :)
-* Run `docker pull jamesstevens/mini-slack142-gunicorn-nginx:v1.2` to get the base container (optional)
+* Run `docker pull jamesstevens/mini-slack142-py38-nginx:v1.0` to get the base container (optional)
 * Run `docker image build -t dnsflsk .` to build the application container (must be run in a directory containing a clone of this project)
 * Run `docker run -p 800:800 --tmpfs=/ram dnsflsk /bin/init` to run it
 
@@ -166,3 +166,6 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
 
 You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py -n www.google.com` from the container's shell.
 You can, of course, also (instead) invoke `cmdresolv.py` directly from the `docker run` command.
+
+I've provided the scripts oneline shell scripts `dkmk` to build the app container and `dkrun <cmd>` to run the container, where `<cmd>` will
+probably be either `sh` to get a shell in the container or `init` to run `sysvinit` to start the application.
