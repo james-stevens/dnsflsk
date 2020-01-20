@@ -1,4 +1,4 @@
-FROM mini-slack142-py38-nginx
+FROM jamesstevens/mini-slack142-py38-nginx:v1.0
 
 COPY *.py /app/
 COPY start_wsgi /app/
