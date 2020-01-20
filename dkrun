@@ -1,0 +1,9 @@
+#! /bin/sh
+
+if test -z "$1"
+	then
+		echo 'Usage: $0 <cmd> <- probably "sh" or "init"'
+		exit 1
+	fi
+
+docker run --read-only -it -p 8000:800 --tmpfs=/ram dnsflsk /bin/$1

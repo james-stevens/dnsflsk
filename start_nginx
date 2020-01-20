@@ -2,4 +2,14 @@
 # (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
 # Alternative license arrangements possible, contact me for more information
 
-exec /usr/local/nginx/sbin/nginx -c conf/dnsflsk.conf -g 'daemon off;'
+temp="client_body_temp proxy_temp scgi_temp uwsgi_temp fastcgi_temp"
+dirs="nginx.log ${temp}"
+
+cd /ram
+mkdir -p -m 700 ${dirs}
+chown daemon: ${dirs}
+chmod 700 ${dirs}
+
+opts="daemon off;"
+
+exec /usr/local/nginx/sbin/nginx -c conf/dnsflsk.conf -g "${opts}"
