@@ -140,6 +140,8 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/nul
 I've created a base container image called [`jamesstevens/mini-slack142-py38-nginx`](https://hub.docker.com/repository/docker/jamesstevens/jamesstevens/mini-slack142-py38-nginx)
 that has `nginx` and `Python` in it, and then created an application container to run `dnsflsk` in that.
 
+I also have a base container [using CentOS v8](https://hub.docker.com/repository/docker/jamesstevens/jamesstevens/mini-centos8-py38-nginx) which you can use instead.
+
 All you need to do is
 
 * Have a current `docker` platform :)
