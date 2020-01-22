@@ -1,4 +1,5 @@
-FROM jamesstevens/mini-slack142-py38-nginx:v1.3
+# FROM jamesstevens/mini-centos8-py38-nginx:v1.5
+FROM jamesstevens/mini-slack142-py38-nginx:v1.5
 
 COPY *.py /app/
 COPY start_wsgi /app/

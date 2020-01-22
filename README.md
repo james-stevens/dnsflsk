@@ -151,7 +151,7 @@ This will run `dnsflsk` (under `gunicorn`) and `nginx` under the very basic, but
 
 You should get some commentary like this...
 ```
-INIT: version 2.88 booting
+INIT: version 2.89 booting
 INIT: Entering runlevel: 3
 [2020-01-17 16:27:34 +0000] [8] [INFO] Starting gunicorn 20.0.4
 [2020-01-17 16:27:34 +0000] [8] [INFO] Listening at: unix:/var/run/dnsflsk.sock (8)
