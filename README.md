@@ -36,7 +36,7 @@ Each server can be specified as either a name or IPv4 address. Names will be res
 If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google).
 
 When more than one server is specified, your query will be sent to all the `servers`, and the
-response you get will be the first one received (as speciifed in the `Responder` property.
+response you get will be the first one received (as specified in the `Responder` property.
 
 
 # Additional Properties
@@ -58,7 +58,7 @@ e.g.
 $ curl 'http://127.0.0.1:5000/dns/api/v1.0/resolv?name=www.google.com'
 ```
 
-Note: This form of executaion is not suitable for production use, see below.
+Note: This form of execution is not suitable for production use, see below.
 
 You can also test out just the resolver code, using the command line utility `cmdresolv.py`. The only required parameter is `-n <name>`.
 
@@ -143,13 +143,13 @@ that has `nginx` and `Python` in it, and then created an application container t
 All you need to do is
 
 * Have a current `docker` platform :)
-* Run `docker pull jamesstevens/mini-slack142-py38-nginx:v1.0` to get the base container (optional)
-* Run `docker image build -t dnsflsk .` to build the application container (must be run in a directory containing a clone of this project)
-* Run `docker run -p 800:800 --tmpfs=/ram dnsflsk /bin/init` to run it
+* Run `docker pull jamesstevens/mini-slack142-py38-nginx:vX.X` (where X.X is the latest version) to get the base container (optional)
+* Run `./dkmk` to build the application container (must be run in a directory containing a clone of this project)
+* Run `./dkrun init` to run it, you can also use `./dkrun sh` to shell into the container.
 
 This will run `dnsflsk` (under `gunicorn`) and `nginx` under the very basic, but still very good, supervisor program `sysvinit`
 
-If you add `-t` after the `run` you will get some commentary. It should look something like this...
+You should get some commentary like this...
 ```
 INIT: version 2.88 booting
 INIT: Entering runlevel: 3
@@ -165,7 +165,15 @@ $ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
 ```
 
 You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py -n www.google.com` from the container's shell.
-You can, of course, also (instead) invoke `cmdresolv.py` directly from the `docker run` command.
+You can, of course, also (instead) invoke `cmdresolv.py` directly from a `docker run` command.
 
 I've provided the one-line shell scripts `dkmk` to build the app container and `dkrun <cmd>` to run the container, where `<cmd>` will
 probably be either `sh` to get a shell in the container or `init` to run `sysvinit` to start the application.
+
+If you want to run `nginx` in the container as an `HTTPS` instead of an `HTTP` server, then all you need to do is copy a file called `cert.pem` into this 
+directory **before** you build the container. The file will then be copied into the `nginx/conf` directory and used by the `start_nginx` script.
+
+The `cert.pem` file must contain **both** the private key and the certificate. For example ...
+```
+cat /opt/daemon/keys/letsencrypt/cert.pem /opt/daemon/keys/letsencrypt/privkey.pem > cert.pem
+```

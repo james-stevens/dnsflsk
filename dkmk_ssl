@@ -1,3 +1,0 @@
-#! /bin/bash
-
-docker image build -f Dockerfile_ssl -t dnsflsk_ssl .

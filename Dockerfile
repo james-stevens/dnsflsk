@@ -1,9 +1,9 @@
-FROM jamesstevens/mini-slack142-py38-nginx:v1.0
+FROM jamesstevens/mini-slack142-py38-nginx:v1.3
 
 COPY *.py /app/
 COPY start_wsgi /app/
 COPY start_nginx /app/
-COPY nginx.conf /usr/local/nginx/conf/dnsflsk.conf
+COPY nginx_dnsflsk.conf nginx_dnsflsk_ssl.conf cert.* /usr/local/nginx/conf/
 COPY inittab /etc/inittab
 
 RUN pip install --upgrade pip

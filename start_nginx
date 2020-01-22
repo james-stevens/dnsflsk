@@ -12,4 +12,11 @@ chmod 700 ${dirs}
 
 opts="daemon off;"
 
-exec /usr/local/nginx/sbin/nginx -c conf/dnsflsk.conf -g "${opts}"
+if test -f /usr/local/nginx/conf/cert.pem
+	then
+		conf="nginx_dnsflsk_ssl.conf"
+	else
+		conf="nginx_dnsflsk.conf"
+	fi
+
+exec /usr/local/nginx/sbin/nginx -c conf/${conf} -g "${opts}"
