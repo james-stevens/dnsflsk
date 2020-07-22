@@ -23,7 +23,7 @@ http {
     sendfile        on;
     keepalive_timeout  65;
 
-    upstream epp_servers {
+    upstream dns_servers {
 "
 sessions=5
 if test "${DOH_SESSIONS}"; then sessions="${DOH_SESSIONS}"; fi
@@ -51,7 +51,7 @@ echo "
 
 
         location / {
-            proxy_pass http://epp_servers;
+            proxy_pass http://dns_servers;
         }
     }
 }"
