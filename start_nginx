@@ -40,9 +40,6 @@ echo "
         listen 800 ssl;
         server_name localhost;
 
-        auth_basic \"EPP REST/API\";
-        auth_basic_user_file htpasswd;
-
         ssl_certificate      certkey.pem;
         ssl_certificate_key  certkey.pem;
 
