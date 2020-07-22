@@ -1,11 +1,8 @@
-#! /bin/bash
+#! /bin/sh
 # (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
 # Alternative license arrangements are possible, contact me for more information
 
 export PATH=$PATH:/opt/python/bin
 
-# needed when run in the container
-if test -d /ram/. ; then mkdir -p /ram/var/run; fi
-if test -d /app; then cd /app; fi
-
-exec gunicorn --bind unix:/var/run/dnsflsk.sock wsgi
+cd /opt
+exec gunicorn --bind unix:/ram/dnsflsk_$1.sock wsgi

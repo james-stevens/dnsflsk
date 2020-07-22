@@ -1,14 +1,26 @@
-# FROM jamesstevens/mini-centos8-py38-nginx:v1.5
-FROM jamesstevens/mini-slack142-py38-nginx:v1.5
+FROM alpine
 
-COPY *.py /app/
-COPY start_wsgi /app/
-COPY start_nginx /app/
-COPY nginx_dnsflsk.conf nginx_dnsflsk_ssl.conf cert.* /usr/local/nginx/conf/
-COPY inittab /etc/inittab
+RUN rmdir /tmp
+RUN ln -s /dev/shm /tmp
+RUN ln -s /dev/shm /ram
+
+RUN apk add python3
+RUN apk add py-pip
+RUN apk add nginx
 
 RUN pip install --upgrade pip
 RUN pip install gunicorn
 RUN pip install Flask
 RUN pip install dnspython
-RUN python -m compileall /app/
+
+COPY certkey.pem /etc/nginx/
+RUN rm -f /etc/inittab
+RUN ln -s /ram/inittab /etc/inittab
+RUN ln -s /ram/nginx_ssl.conf /etc/nginx/nginx_ssl.conf
+
+COPY *.py /opt/
+COPY start_wsgi /opt/
+COPY start_nginx /opt/
+RUN python3 -m compileall /opt/
+
+CMD [ /opt/start ]

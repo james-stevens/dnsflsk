@@ -10,11 +10,15 @@ import json
 import argparse
 import validation
 
+dohServers = "8.8.8.8,8.8.4.4"
+if "DOH_SERVERS" in os.environ:
+    dohServers = os.environ["DOH_SERVERS"]
+
 parser = argparse.ArgumentParser(description='Process some integers.')
 
 parser.add_argument("-s",
                     '--servers',
-                    default="8.8.8.8,8.8.4.4",
+                    default=dohServers,
                     help='Comma separated list of server ip addresses')
 
 parser.add_argument("-t",
