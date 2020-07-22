@@ -1,3 +1,3 @@
 #! /bin/bash
 
-docker image build -t dnsflsk .
+docker image build -t doh .

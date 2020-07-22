@@ -8,22 +8,6 @@ Google also supports sending binary DNS query packets to their service. This doe
 It allows you to issue JSON DNS queries and get JSON responses, with the DNS done using an 
 underlying UDP client socket.  It really should be ASGI, but its currently WSGI.
 
-I've used ...
-
-* Python - v3.6.9
-* dnspython - v1.16.0 (`pip install dnspython`)
-* Flask - v1.1.1 (`pip install Flask`)
-
-Installing `nginx` or `Python` needs to be done using your O/S level install procedure.
-
-But it doesn't do anything tricky, so any reasonably recent version will probably work.
-
-If you feel like it, leave a comment in the [first issue](https://github.com/james-stevens/dnsflsk/issues/1) called `Just for chatting`
-
-
-# Status
-
-The code works, but I'll probably keep updating it, if I can think of anything else, or in response to feedback / bugs.
 
 
 # Additional Options
@@ -33,10 +17,11 @@ In addition to the [Google Supported Parameters](https://developers.google.com/s
 Each server can be specified as either a name or IPv4 address. Names will be resolved using your server's default resolution mechanism
 (i.e. the same as the command line).
 
-If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google).
+If you do not specify a `servers` option, it will default to `8.8.8.8,8.8.4.4` (Google). If you 
+set the environment variable `DOH_SERVERS` as a comma separated list of IP Addresses, this will be used instead.
 
 When more than one server is specified, your query will be sent to all the `servers`, and the
-response you get will be the first one received (as specified in the `Responder` property.
+response you get will be the first one received, as specified in the `Responder` property.
 
 
 # Additional Properties
@@ -82,100 +67,27 @@ optional arguments:
 
 # Running at Production Quality
 
-I've also supplied all the extra files you'd need to run this at production quality. I used `gunicorn` and `nginx`.
+For production use, I strongly recommend you simply use the container `jamesstevens / doh`, or build the container yourself by running
+`./dkmk`.
 
-* `pip install gunicorn` (if you don't already have it)
-* Copy (or symlink) `nginx.conf` into the `${NGINX_BASE_DIR}/conf/dnsflsk.conf`
-* Run `nginx -t -c conf/dnsflsk.conf` to check its OK
-* Start Nginx with `nginx -c conf/dnsflsk.conf`
-* Start WSGI/gunicorn with `./start_wsgi`
+By default, the container will send its queries to the Google rsolvers `8.8.8.8` & `8.4.4.8`. By default
+it will also run 5 `python/gunicorn` threads and load-balance then using `nginx`.
 
-For `start_wsgi` to work, you may need to ensure `gunicorn` is in your run-path, or edit the script.
+The number of sessions and the destination DNS servers cna be changed using the environment variables
+`DOH_SESSIONS` and `DOH_SERVERS`, which can be specified at the command line (using `docker run -e`) or in a file
+using `docket run --env-file=`.
 
-Then, from another ssh, you should be able to run something like
+`DOH_SERVERS` is a comma separated list of IP Addresses.
 
-```
-$ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
-```
-If you fail to start the WSGI agent, you will get an HTTP `502 Bad Gateway` message
+`DOH_SESSIONS` is simply a positive integer.
 
-If it works, you'll see something like this
-```
-$ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com' 2>/dev/null | jq
-{
-  "QR": true,
-  "AA": false,
-  "TC": false,
-  "RD": true,
-  "CD": false,
-  "AD": false,
-  "RA": true,
-  "Flags": [
-    "QR",
-    "RD",
-    "RA"
-  ],
-  "Status": 0,
-  "Question": [
-    {
-      "name": "www.google.com.",
-      "type": 1
-    }
-  ],
-  "Answer": [
-    {
-      "name": "www.google.com.",
-      "data": "216.58.210.36",
-      "type": 1
-    }
-  ],
-  "Authority": [],
-  "Responder": "8.8.4.4"
-}
-```
+`nginx` will also do the SSL using the key & certificate in the file `certkey.pem`, which has been created using a private
+certificate authority. The public key for this private CA is in the file `myCA.pem`.
 
+The server name for the key is `doh.jrcs.net` which should resolve to `127.0.0.1`, so if you start the container with `./dkrun`, then run
 
-# Runnning in a Production Docker Container
+	curl --cacert myCA.pem https://doh.jrcs.net:800/dns/api/v1.0/resolv?name=www.google.com
 
-I've created a base container image called [`jamesstevens/mini-slack142-py38-nginx`](https://hub.docker.com/repository/docker/jamesstevens/mini-slack142-py38-nginx)
-that has `nginx` and `Python` in it, and then created an application container to run `dnsflsk` in that.
+then it whould work fine, but for production use I would recommend you replace the certificate with a publicly verifiable one.
 
-I also have a base container [using CentOS v8](https://hub.docker.com/repository/docker/jamesstevens/mini-centos8-py38-nginx) which you can use instead.
-
-All you need to do is
-
-* Have a current `docker` platform :)
-* Run `docker pull jamesstevens/mini-slack142-py38-nginx:vX.X` (where X.X is the latest version) to get the base container (optional)
-* Run `./dkmk` to build the application container (must be run in a directory containing a clone of this project)
-* Run `./dkrun init` to run it, you can also use `./dkrun sh` to shell into the container.
-
-This will run `dnsflsk` (under `gunicorn`) and `nginx` under the very basic, but still very good, supervisor program `sysvinit`
-
-You should get some commentary like this...
-```
-INIT: version 2.89 booting
-INIT: Entering runlevel: 3
-[2020-01-17 16:27:34 +0000] [8] [INFO] Starting gunicorn 20.0.4
-[2020-01-17 16:27:34 +0000] [8] [INFO] Listening at: unix:/var/run/dnsflsk.sock (8)
-[2020-01-17 16:27:34 +0000] [8] [INFO] Using worker: sync
-[2020-01-17 16:27:34 +0000] [13] [INFO] Booting worker with pid: 13
-```
-
-Then, once again, a command like this should test it works
-```
-$ curl 'http://127.0.0.1:800/dns/api/v1.0/resolv?name=www.google.com'
-```
-
-You can also test the container by running `/bin/sh` instead, then running `/app/cmdresolv.py -n www.google.com` from the container's shell.
-You can, of course, also (instead) invoke `cmdresolv.py` directly from a `docker run` command.
-
-I've provided the one-line shell scripts `dkmk` to build the app container and `dkrun <cmd>` to run the container, where `<cmd>` will
-probably be either `sh` to get a shell in the container or `init` to run `sysvinit` to start the application.
-
-If you want to run `nginx` in the container as an `HTTPS` instead of an `HTTP` server, then all you need to do is copy a file called `cert.pem` into this 
-directory **before** you build the container. The file will then be copied into the `nginx/conf` directory and used by the `start_nginx` script.
-
-The `cert.pem` file must contain **both** the private key and the certificate. For example ...
-```
-cat /opt/daemon/keys/letsencrypt/cert.pem /opt/daemon/keys/letsencrypt/privkey.pem > cert.pem
-```
+NOTE: the container is designed to run `read-only` so we would recommend you use this.
