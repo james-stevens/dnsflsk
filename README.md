@@ -71,7 +71,7 @@ For production use, I strongly recommend you simply use the container `jamesstev
 `./dkmk`.
 
 By default, the container will send its queries to the Google rsolvers `8.8.8.8` & `8.4.4.8`. By default
-it will also run 5 `python/gunicorn` threads and load-blaance then using `nginx`.
+it will also run 5 `python/gunicorn` threads and load-balance then using `nginx`.
 
 The number of sessions and the destination DNS servers cna be changed using the environment variables
 `DOH_SESSIONS` and `DOH_SERVERS`, which can be specified at the command line (using `docker run -e`) or in a file
@@ -79,9 +79,9 @@ using `docket run --env-file=`.
 
 `DOH_SERVERS` is a comma separated list of IP Addresses.
 
-`DOH_SESSIONS` is simply a postiive integer.
+`DOH_SESSIONS` is simply a positive integer.
 
-`nginx` will also do the SSL using the key & certifiate in the file `certkey.pem`, which has been created using a private
+`nginx` will also do the SSL using the key & certificate in the file `certkey.pem`, which has been created using a private
 certificate authority. The public key for this private CA is in the file `myCA.pem`.
 
 The server name for the key is `doh.jrcs.net` which should resolve to `127.0.0.1`, so if you start the container with `./dkrun`, then run
