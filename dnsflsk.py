@@ -4,6 +4,8 @@
 
 import resolv
 import validation
+import os
+import syslog
 
 import flask
 import dns
@@ -23,13 +25,21 @@ def abort(err_no, message):
 
 application = flask.Flask("DNS/Rest/api")
 
+dohServers = "8.8.8.8,8.8.4.4"
+if "DOH_SERVERS" in os.environ:
+    dohServers = os.environ["DOH_SERVERS"]
+
+syslogFacility = syslog.LOG_LOCAL6
+syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
+
 
 @application.route('/dns/api/v1.0/resolv', methods=['GET'])
 def resolver():
     qry = Empty()
     qry.name = flask.request.args.get("name")
     qry.rdtype = flask.request.args.get("type")
-    qry.servers = flask.request.args.get("servers", default="8.8.8.8,8.8.4.4")
+
+    qry.servers = flask.request.args.get("servers", default=dohServers)
     qry.ct = flask.request.args.get("ct", default=False, type=bool)
     qry.cd = flask.request.args.get("cd")
     qry.do = flask.request.args.get("do", default=False, type=bool)
@@ -60,6 +70,7 @@ def resolver():
             return abort(400, "'type' parameter is not a known RR name")
 
     try:
+        syslog.syslog("{}/{} -> {}".format(qry.name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
         res = resolv.Resolver(qry)
     except Exception as e:
         return abort(400, e)

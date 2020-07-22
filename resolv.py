@@ -24,6 +24,10 @@ DNS_FLAGS = {
     "RA": 0x80
 }
 
+dohServers = ["8.8.8.8", "8.8.4.4"]
+if "DOH_SERVERS" in os.environ:
+    dohServers = os.environ["DOH_SERVERS"].split(",")
+
 
 def resolv_host(server):
     if validation.is_valid_ipv4(server):
@@ -48,7 +52,7 @@ class Resolver:
         if hasattr(qry, "servers"):
             self.servers = qry.servers
         else:
-            self.servers = ["8.8.8.8", "8.8.4.4"]
+            self.servers = dohServers
 
         for s in qry.servers:
             if not validation.is_valid_ipv4(s):
