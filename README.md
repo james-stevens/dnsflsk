@@ -71,9 +71,9 @@ For production use, I strongly recommend you simply use the container `jamesstev
 `./dkmk`.
 
 By default, the container will send its queries to the Google rsolvers `8.8.8.8` & `8.4.4.8`. By default
-it will also run 5 `python/gunicorn` threads and load-balance then using `nginx`.
+it will also run 5 `python/gunicorn` threads and load-balance them using `nginx`.
 
-The number of sessions and the destination DNS servers cna be changed using the environment variables
+The number of sessions and the destination DNS servers can be changed using the environment variables
 `DOH_SESSIONS` and `DOH_SERVERS`, which can be specified at the command line (using `docker run -e`) or in a file
 using `docket run --env-file=`.
 
@@ -88,6 +88,8 @@ The server name for the key is `doh.jrcs.net` which should resolve to `127.0.0.1
 
 	curl --cacert myCA.pem https://doh.jrcs.net:800/dns/api/v1.0/resolv?name=www.google.com
 
-then it whould work fine, but for production use I would recommend you replace the certificate with a publicly verifiable one.
+then it should work fine, but for production use I would recommend you replace the certificate with a publicly verifiable one.
 
-NOTE: the container is designed to run `read-only` so we would recommend you use this.
+NOTE: the container is designed to run `read-only` so we would recommend you use this. e.g.
+
+	docker run --read-only -it -p 800:800 doh
