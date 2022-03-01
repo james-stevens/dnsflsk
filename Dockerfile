@@ -1,30 +1,28 @@
-FROM alpine
+FROM alpine:3.13
 
 RUN rmdir /tmp
 RUN ln -s /dev/shm /tmp
 RUN ln -s /dev/shm /ram
 
-RUN apk add python3
-RUN apk add py-pip
-RUN apk add nginx
-
-RUN pip install --upgrade pip
-RUN pip install gunicorn
-RUN pip install Flask
-RUN pip install dnspython
+RUN apk add nginx curl
+RUN apk add python3 py3-gunicorn py3-flask
+RUN apk add py3-dnspython py3-requests
 
 RUN rmdir /var/lib/nginx/tmp /var/log/nginx
 RUN ln -s /dev/shm /var/lib/nginx/tmp
 RUN ln -s /dev/shm /var/log/nginx
 RUN ln -s /dev/shm /run/nginx
 
-COPY certkey.pem /etc/nginx/
-RUN rm -f /etc/inittab
-RUN ln -s /ram/inittab /etc/inittab
-RUN ln -s /ram/nginx_ssl.conf /etc/nginx/nginx_ssl.conf
+RUN addgroup nginx daemon
 
-COPY *.py /opt/
-RUN python3 -m compileall /opt/
-COPY start start_wsgi start_nginx /opt/
+COPY etc/nginx.conf /etc/nginx/nginx.conf
+COPY etc/crontab /etc/crontabs/root
+COPY etc/inittab /etc/inittab
+COPY etc /usr/local/etc/
 
-CMD [ "/opt/start" ]
+COPY doh/*.py /usr/local/doh/
+RUN python3 -m compileall /usr/local/doh
+
+COPY bin /usr/local/bin/
+
+CMD [ "/sbin/init" ]

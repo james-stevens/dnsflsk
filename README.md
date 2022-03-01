@@ -82,11 +82,11 @@ using `docket run --env-file=`.
 `DOH_SESSIONS` is simply a positive integer.
 
 `nginx` will also do the SSL using the key & certificate in the file `certkey.pem`, which has been created using a private
-certificate authority. The public key for this private CA is in the file `myCA.pem`.
+certificate authority. The public key for this private CA is in the file `etc/myCA.pem`.
 
 The server name for the key is `doh.jrcs.net` which should resolve to `127.0.0.1`, so if you start the container with `./dkrun`, then run
 
-	curl --cacert myCA.pem https://doh.jrcs.net:800/dns/api/v1.0/resolv?name=www.google.com
+	curl --cacert etc/myCA.pem https://doh.jrcs.net:800/dns/api/v1.0/resolv?name=www.google.com
 
 then it should work fine, but for production use I would recommend you replace the certificate with a publicly verifiable one.
 

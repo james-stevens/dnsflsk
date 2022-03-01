@@ -1,0 +1,12 @@
+#! /bin/sh
+# (c) Copyright 2019-2022, James Stevens ... see LICENSE for details
+# Alternative license arrangements are possible, contact me for more information
+
+sessions=3
+if test "${DOH_SESSIONS}"
+	then
+		sessions=${DOH_SESSIONS}
+	fi
+
+cd /usr/local/doh
+exec gunicorn --workers=${sessions} --bind unix:/ram/doh_$1.sock wsgi
