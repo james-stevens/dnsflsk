@@ -29,8 +29,13 @@ dohServers = "8.8.8.8,8.8.4.4"
 if "DOH_SERVERS" in os.environ:
     dohServers = os.environ["DOH_SERVERS"]
 
-syslogFacility = syslog.LOG_LOCAL6
-syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
+with_syslog = True
+if ("DOH_SYSLOG_SERVER" in os.environ
+        and os.environ["DOH_SYSLOG_SERVER"] == "-"):
+    with_syslog = False
+else:
+    syslogFacility = syslog.LOG_LOCAL6
+    syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
 
 
 @application.route('/dns/api/v1.0/resolv', methods=['GET'])
@@ -70,7 +75,9 @@ def resolver():
             return abort(400, "'type' parameter is not a known RR name")
 
     try:
-        syslog.syslog("{}/{} -> {}".format(qry.name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
+        if with_syslog:
+            syslog.syslog("{}/{} -> {}".format(
+                qry.name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
         res = resolv.Resolver(qry)
     except Exception as e:
         return abort(400, e)

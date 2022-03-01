@@ -4,7 +4,12 @@
 
 if test "${DOH_SYSLOG_SERVER}"
 	then
-		exec /sbin/syslogd -n -R ${DOH_SYSLOG_SERVER}
-	else
-		exec /sbin/syslogd -n -O -
+		if test "${DOH_SYSLOG_SERVER}" = "-"
+			then
+				exec /sbin/syslogd -n -O /dev/null
+			else
+				exec /sbin/syslogd -n -R ${DOH_SYSLOG_SERVER}
+			fi
 	fi
+
+exec /sbin/syslogd -n -O -
