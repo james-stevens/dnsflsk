@@ -5,11 +5,13 @@
 import re
 import socket
 
-is_valid_host_re = re.compile(r'^([0-9a-z][-\w]*[0-9a-z]\.)+[a-z0-9\-]{2,15}$')
-
 
 def is_valid_host(host):
-    return is_valid_host_re.match(host) is not None
+    if host is None:
+        return False
+    return re.match(
+        r'^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$',
+        host, re.IGNORECASE) is not None
 
 
 def is_valid_ipv4(address):
@@ -28,3 +30,9 @@ def is_valid_ipv4(address):
         return False
 
     return True
+
+
+# for testing
+if __name__ == "__main__":
+    for host in ["A_A", "www.gstatic.com.", "m.files.bbci.co.uk."]:
+        print(host, is_valid_host(host))

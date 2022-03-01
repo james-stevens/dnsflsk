@@ -20,9 +20,9 @@ COPY etc/crontab /etc/crontabs/root
 COPY etc/inittab /etc/inittab
 COPY etc /usr/local/etc/
 
+COPY bin /usr/local/bin/
+
 COPY doh/*.py /usr/local/doh/
 RUN python3 -m compileall /usr/local/doh
-
-COPY bin /usr/local/bin/
 
 CMD [ "/sbin/init" ]

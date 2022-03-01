@@ -10,6 +10,7 @@ import syslog
 import flask
 import dns
 import dns.rdatatype
+import dns.message
 import dns.resolver
 
 
@@ -18,6 +19,8 @@ class Empty:
 
 
 def abort(err_no, message):
+    if with_syslog:
+        syslog.syslog(f'ERROR: #{err_no} {message}')
     response = flask.jsonify({'error': message})
     response.status_code = err_no
     return response
@@ -38,41 +41,80 @@ else:
     syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
 
 
-@application.route('/dns/api/v1.0/resolv', methods=['GET'])
+class Query:
+    def __init__(self, req):
+        self.name = None
+        self.rdtype = None
+        self.do = False
+        self.cd = None
+        self.ct = False
+        self.servers = dohServers
+        self.binary_format = False
+        self.bin_data = None
+
+        if req.content_type == "application/dns-message":
+            self.queryFromLine(flask.request.get_data())
+        elif len(req.form) > 0:
+            self.queryFromJson(req.form)
+        elif len(req.args) > 0:
+            self.queryFromJson(req.args)
+
+        self.servers = self.servers.split(",")
+        self.servers = [resolv.resolv_host(s) for s in self.servers]
+
+    def queryFromLine(self, bin_data):
+        self.bin_data = bin_data
+        self.binary_format = True
+        msg = dns.message.from_wire(bin_data)
+
+        rr = msg.question[0]
+        self.name = rr.name.to_text()
+        self.rdtype = rr.rdtype
+
+        flags = [
+            flag for flag in resolv.DNS_FLAGS
+            if (msg.flags & resolv.DNS_FLAGS[flag])
+        ]
+        self.ct = "CT" in flags
+        self.do = "DO" in flags
+        self.cd = "CD" in flags
+
+    def queryFromJson(self, sent_data):
+        self.name = sent_data.get("name")
+        self.rdtype = sent_data.get("type")
+
+        self.servers = sent_data.get("servers", default=dohServers)
+        self.ct = sent_data.get("ct", default=False, type=bool)
+        self.cd = sent_data.get("cd", default=False, type=bool)
+        self.do = sent_data.get("do", default=False, type=bool)
+
+        if (not hasattr(self, "rdtype")) or self.rdtype is None:
+            self.rdtype = 1
+        elif self.rdtype.isdigit():
+            self.rdtype = int(self.rdtype)
+            if self.rdtype <= 0 or self.rdtype >= 65535:
+                return abort(
+                    400, f"'type' parameter is out of range ({self.rdtype})")
+        else:
+            try:
+                self.rdtype = dns.rdatatype.from_text(self.rdtype)
+            except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
+                return abort(400, "'type' parameter is not a known RR name")
+
+
+@application.route('/dns/api/v1.0/resolv', methods=['GET', 'POST'])
 def resolver():
-    qry = Empty()
-    qry.name = flask.request.args.get("name")
-    qry.rdtype = flask.request.args.get("type")
-
-    qry.servers = flask.request.args.get("servers", default=dohServers)
-    qry.ct = flask.request.args.get("ct", default=False, type=bool)
-    qry.cd = flask.request.args.get("cd")
-    qry.do = flask.request.args.get("do", default=False, type=bool)
-
-    qry.servers = qry.servers.split(",")
-    qry.servers = [resolv.resolv_host(s) for s in qry.servers]
+    qry = Query(flask.request)
 
     for s in qry.servers:
         if not validation.is_valid_ipv4(s):
             return abort(400, "Bad server IPv4 Address")
 
-    if not hasattr(qry, "name"):
+    if qry.name is None:
         return abort(400, "'name' parameter is missing")
 
     if not validation.is_valid_host(qry.name):
         return abort(400, "'name' parameter is not a valid FQDN")
-
-    if (not hasattr(qry, "rdtype")) or qry.rdtype is None:
-        qry.rdtype = 1
-    elif qry.rdtype.isdigit():
-        qry.rdtype = int(qry.rdtype)
-        if qry.rdtype <= 0 or qry.rdtype >= 65535:
-            return abort(400, "'type' parameter is out of range")
-    else:
-        try:
-            qry.rdtype = dns.rdatatype.from_text(qry.rdtype)
-        except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
-            return abort(400, "'type' parameter is not a known RR name")
 
     try:
         if with_syslog:
@@ -82,15 +124,19 @@ def resolver():
     except Exception as e:
         return abort(400, e)
 
-    rec = res.recv()
+    rec = res.recv(qry.binary_format)
     if rec is None:
         return abort(400, "No valid answer received")
 
-    return flask.jsonify(rec)
+    if qry.binary_format:
+        response = flask.make_response(qry.bin_data[:2] + rec[2:])
+        response.headers.set('Content-Type', 'application/dns-message')
+        return response
+    else:
+        return flask.jsonify(rec)
 
 
 @application.route("/dns/api/v1.0/")
-@application.route("/dns/api/v1.0")
 def v1():
     return "Welcome to the DNS/API v1.0"
 

@@ -32,6 +32,7 @@ dohServers = ["8.8.8.8", "8.8.4.4"]
 if "DOH_SERVERS" in os.environ:
     dohServers = os.environ["DOH_SERVERS"].split(",")
 
+
 def resolv_host(server):
     if validation.is_valid_ipv4(server):
         return server
@@ -126,7 +127,7 @@ class Resolver:
         return (self.qryid is not None and self.reply[0] == self.qryid[0]
                 and self.reply[1] == self.qryid[1])
 
-    def recv(self):
+    def recv(self, binary_format=False):
         """ look for dns UDP response and read it """
         while True:
             self.tries = self.tries + 1
@@ -139,6 +140,8 @@ class Resolver:
             if len(rlist) > 0:
                 self.reply, (addr, _) = self.sock.recvfrom(DNS_MAX_RESP)
                 if self.match_id():
+                    if binary_format:
+                        return self.reply
                     ret = self.decode_reply()
                     if ret is None:
                         return None
