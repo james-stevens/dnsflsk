@@ -17,7 +17,7 @@ import dns.rdatatype
 import validation
 
 DNS_MAX_RESP = 4096
-MAX_TRIES = 5
+MAX_TRIES = 10
 DNS_FLAGS = {
     "QR": 0x8000,
     "AA": 0x0400,
@@ -34,6 +34,7 @@ if "DOH_SERVERS" in os.environ:
 
 
 def resolv_host(server):
+    """ resolve {host} to an IP if its a host name """
     if validation.is_valid_ipv4(server):
         return server
     if validation.is_valid_host(server):
@@ -54,6 +55,8 @@ class Query:  # pylint: disable=too-few-public-methods
         self.name = name
         self.rdtype = rdtype
         self.with_dnssec = True
+        self.do = False
+        self.cd = False
         self.servers = ["8.8.8.8", "1.1.1.1"]
 
     def resolv(self):
@@ -88,7 +91,7 @@ class Resolver:
         if self.sock is None:
             raise ResolvError("Failed to open UDP client socket")
 
-        self.expiry = 2
+        self.expiry = 1
         self.tries = 0
         msg = dns.message.make_query(qry.name,
                                      rdtype,
@@ -129,30 +132,30 @@ class Resolver:
 
     def recv(self, binary_format=False):
         """ look for dns UDP response and read it """
-        while True:
-            self.tries = self.tries + 1
-
+        while self.tries < MAX_TRIES:
             if not self.send():
                 self.sock.close()
                 return None
 
-            rlist, _, _ = select.select([self.sock], [], [], self.expiry)
-            if len(rlist) > 0:
+            while True:
+                rlist, _, _ = select.select([self.sock], [], [], self.expiry)
+                if len(rlist) <= 0:
+                    break
+
                 self.reply, (addr, _) = self.sock.recvfrom(DNS_MAX_RESP)
                 if self.match_id():
                     if binary_format:
                         return self.reply
-                    ret = self.decode_reply()
-                    if ret is None:
+
+                    if (ret := self.decode_reply()) is None:
                         return None
+
                     ret["Responder"] = addr
                     self.sock.close()
                     return ret
 
-            self.expiry = self.expiry + int(self.expiry / 2)
-            if self.tries >= MAX_TRIES:
-                self.sock.close()
-                return None
+            self.expiry += int(self.expiry / 2) if self.expiry > 2 else 1
+            self.tries += 1
 
         self.sock.close()
         return None
