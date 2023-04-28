@@ -102,6 +102,7 @@ class Query:
                 return abort(400, "'type' parameter is not a known RR name")
 
 
+@application.route('/resolv', methods=['GET', 'POST'])
 @application.route('/dns/api/v1.0/resolv', methods=['GET', 'POST'])
 def resolver():
     qry = Query(flask.request)

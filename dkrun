@@ -2,5 +2,4 @@
 
 docker run --read-only \
 	--env "DOH_SERVERS=8.8.8.8,1.1.1.1" \
-	-v /opt/jrcs:/opt/pems \
-	-it -p 192.168.1.145:443:443 flask-doh
+	-it -p 192.168.1.145:80:80 flask-doh
