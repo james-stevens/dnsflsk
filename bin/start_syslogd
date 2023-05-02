@@ -2,13 +2,13 @@
 # (c) Copyright 2019-2022, James Stevens ... see LICENSE for details
 # Alternative license arrangements possible, contact me for more information
 
-if test "${DOH_SYSLOG_SERVER}"
+if test "${SYSLOG_SERVER}"
 	then
-		if test "${DOH_SYSLOG_SERVER}" = "-"
+		if test "${SYSLOG_SERVER}" = "-"
 			then
 				exec /sbin/syslogd -n -O /dev/null
 			else
-				exec /sbin/syslogd -n -R ${DOH_SYSLOG_SERVER}
+				exec /sbin/syslogd -n -R ${SYSLOG_SERVER}
 			fi
 	fi
 

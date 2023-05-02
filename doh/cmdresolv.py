@@ -2,13 +2,12 @@
 # (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
 # Alternative license arrangements possible, contact me for more information
 
-import resolv
-
-import socket
+import os
 import sys
 import json
 import argparse
-import validation
+
+import resolv
 
 dohServers = "8.8.8.8,8.8.4.4"
 if "DOH_SERVERS" in os.environ:
