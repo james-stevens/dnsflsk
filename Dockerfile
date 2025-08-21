@@ -1,4 +1,4 @@
-FROM alpine:3.16
+FROM alpine:3.18
 
 RUN apk update
 RUN apk upgrade
@@ -25,7 +25,7 @@ COPY etc /usr/local/etc/
 
 COPY bin /usr/local/bin/
 
-COPY doh/*.py /usr/local/doh/
+COPY doh /usr/local/doh/
 RUN python3 -m compileall /usr/local/doh
 
 CMD [ "/sbin/init" ]
