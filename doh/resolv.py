@@ -100,6 +100,7 @@ class Resolver:
         self.tries = 0
         msg = dns.message.make_query(qry.name,
                                      rdtype,
+                                     payload=10000,
                                      want_dnssec=(qry.do or qry.cd))
 
         self.question = bytearray(msg.to_wire())
@@ -152,8 +153,9 @@ class Resolver:
                     self.decoded_resp = dns.message.from_wire(self.reply)
 
                     if (self.decoded_resp.flags
-                            & DNS_FLAGS["TC"]) or self.force_tcp:
+                            & DNS_FLAGS["TC"]) > 0 or self.force_tcp:
                         self.reply = self.ask_in_tcp(addr)
+                        self.decoded_resp = dns.message.from_wire(self.reply)
 
                     if binary_format:
                         return self.reply
@@ -175,7 +177,15 @@ class Resolver:
         sock = socket.socket()
         sock.connect((addr, 53))
         sock.send(len(self.question).to_bytes(2, "big") + self.question)
-        reply = sock.recv(20000)
+        sock.settimeout(0.2)
+        reply = bytes()
+        while (True):
+            try:
+                data_in = sock.recv(20000)
+            except socket.timeout:
+                sock.close()
+                return reply[2:]
+            reply = reply + data_in
         sock.close()
         return reply[2:]
 
