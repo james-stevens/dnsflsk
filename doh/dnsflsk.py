@@ -41,6 +41,7 @@ if ("DOH_SYSLOG_SERVER" in os.environ
 
 
 class Query:
+
     def __init__(self, req):
         self.name = None
         self.rdtype = None
