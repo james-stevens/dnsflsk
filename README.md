@@ -1,13 +1,11 @@
 # dnsflsk - [Docker.com - jamesstevens/doh](https://hub.docker.com/r/jamesstevens/doh)
 
 This is a Rest/API DNS proxy following the [Google JSON/DNS/API](https://developers.google.com/speed/public-dns/docs/doh/json) spec,
-AKA [DoH or DNS over HTTPS](https://developers.google.com/speed/public-dns/docs/doh/index).  Implemented using `Flask` and `dnspython` to do the heavy lifting.
+AKA [DoH or DNS over HTTPS](https://developers.google.com/speed/public-dns/docs/doh/index).
+Implemented using `Flask` and `dnspython` to do the heavy lifting.
 
-Google also supports sending binary DNS query packets to their service. This does not.
-
-It allows you to issue JSON DNS queries and get JSON responses, with the DNS done using an 
-underlying UDP client socket.  It really should be ASGI, but its currently WSGI.
-
+It supports both the binary and JSON formats of DoH. To use the binary interface you *must* declare the `Content-type` as `application/dns-message`,
+otherwise it will defaul to assuming you are using JSON.
 
 
 # Additional Options
@@ -45,23 +43,23 @@ $ curl 'http://127.0.0.1:5000/dns/api/v1.0/resolv?name=www.google.com'
 
 Note: This form of execution is not suitable for production use, see below.
 
-You can also test out just the resolver code, using the command line utility `cmdresolv.py`. The only required parameter is `-n <name>`.
+You can also test out just the resolver code, using the command line utility `resolv.py`. The only required parameter is `-n <name>`.
 
 ```
-usage: cmdresolv.py [-h] [-s SERVERS] [-t RDTYPE] [-n NAME] [-d] [-c]
+usage: resolv.py [-h] [-s SERVERS] [-n NAME] [-c] [-d] [-T] [-t RDTYPE]
 
-Process some integers.
+This is a wrapper to test the resolver code
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -s SERVERS, --servers SERVERS
-                        Comma separated list of server ip addresses
+                        Resolvers to query
+  -n NAME, --name NAME  Name to query for
+  -c, --cd              With DO bit, DNSSEC
+  -d, --do              With DO bit, DNSSEC
+  -T, --force-tcp       Force TCP query
   -t RDTYPE, --rdtype RDTYPE
-                        Record type to query (number or name), default=A
-  -n NAME, --name NAME  Name to look-up
-  -d, --do              Set DO bit
-  -c, --cd              Same as --do
-
+                        RR Type to query for
 ```
 
 
@@ -71,25 +69,22 @@ For production use, I strongly recommend you simply use the container `jamesstev
 `./dkmk`.
 
 By default, the container will send its queries to the Google rsolvers `8.8.8.8` & `8.4.4.8`. By default
-it will also run 5 `python/gunicorn` threads and load-balance them using `nginx`.
+it will also run 3 forks which run 3 thread each. The forks are load-balanced using `nginx` and the threads 
+are load balanced by `gunicorn`.
 
-The number of sessions and the destination DNS servers can be changed using the environment variables
+The number of threads and the destination DNS servers can be changed using the environment variables
 `DOH_SESSIONS` and `DOH_SERVERS`, which can be specified at the command line (using `docker run -e`) or in a file
 using `docket run --env-file=`.
 
 `DOH_SERVERS` is a comma separated list of IP Addresses.
 
-`DOH_SESSIONS` is simply a positive integer.
+`DOH_SESSIONS` a positive integer for number fo `gunicorn` threads.
 
-`nginx` will also do the SSL using the key & certificate in the file `certkey.pem`, which has been created using a private
-certificate authority. The public key for this private CA is in the file `etc/myCA.pem`.
+`nginx` will load-balance the forks, but doe not do any TLS/SSL - this must be doen externally. This
 
-The server name for the key is `doh.jrcs.net` which should resolve to `127.0.0.1`, so if you start the container with `./dkrun`, then run
+## Testing the container
 
-	curl --cacert etc/myCA.pem https://doh.jrcs.net:800/dns/api/v1.0/resolv?name=www.google.com
+If you build the container with `./dkmk`, then you should be able to run it with `./dkrun`. Once it is running this should work
 
-then it should work fine, but for production use I would recommend you replace the certificate with a publicly verifiable one.
+	curl http://127.0.0.1/dns/api/v1.0/resolv?name=www.google.com
 
-NOTE: the container is designed to run `read-only` so we would recommend you use this. e.g.
-
-	docker run --read-only -it -p 800:800 doh

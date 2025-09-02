@@ -203,18 +203,21 @@ class Resolver:
 
         out["Question"] = [{
             "name": rr.name.to_text(),
+            "TTL": rr.ttl,
             "type": rr.rdtype
         } for rr in self.decoded_resp.question]
 
         out["Answer"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
+            "TTL": rr.ttl,
             "type": rr.rdtype
         } for rr in self.decoded_resp.answer for i in rr]
 
         out["Authority"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
+            "TTL": rr.ttl,
             "type": rr.rdtype
         } for rr in self.decoded_resp.authority for i in rr]
 
@@ -233,6 +236,16 @@ def main():
                         "--name",
                         default="jrcs.net",
                         help="Name to query for")
+    parser.add_argument("-c",
+                        "--cd",
+                        default=False,
+                        help="With DO bit, DNSSEC",
+                        action="store_true")
+    parser.add_argument("-d",
+                        "--do",
+                        default=False,
+                        help="With DO bit, DNSSEC",
+                        action="store_true")
     parser.add_argument("-T",
                         "--force-tcp",
                         default=False,
@@ -249,7 +262,7 @@ def main():
     else:
         qry = Query(args.name, args.rdtype, args.force_tcp)
         qry.servers = args.servers.split(",")
-        qry.do = True
+        qry.do = (args.do or args.cd)
         print(json.dumps(qry.resolv(), indent=2))
 
 
