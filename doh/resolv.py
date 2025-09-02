@@ -100,7 +100,7 @@ class Resolver:
         self.tries = 0
         msg = dns.message.make_query(qry.name,
                                      rdtype,
-                                     payload=10000,
+                                     payload=30000,
                                      want_dnssec=(qry.do or qry.cd))
 
         self.question = bytearray(msg.to_wire())
@@ -181,7 +181,7 @@ class Resolver:
         reply = bytes()
         while (True):
             try:
-                data_in = sock.recv(20000)
+                data_in = sock.recv(2000)
             except socket.timeout:
                 sock.close()
                 return reply[2:]
