@@ -32,16 +32,16 @@ dohServers = "8.8.8.8,8.8.4.4"
 if "DOH_SERVERS" in os.environ:
     dohServers = os.environ["DOH_SERVERS"]
 
-with_syslog = True
+with_syslog = False
 if ("DOH_SYSLOG_SERVER" in os.environ
-        and os.environ["DOH_SYSLOG_SERVER"] == "-"):
-    with_syslog = False
-else:
+        and os.environ["DOH_SYSLOG_SERVER"] != "-"):
+    with_syslog = True
     syslogFacility = syslog.LOG_LOCAL6
     syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
 
 
 class Query:
+
     def __init__(self, req):
         self.name = None
         self.rdtype = None
@@ -99,7 +99,10 @@ class Query:
             try:
                 self.rdtype = dns.rdatatype.from_text(self.rdtype)
             except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
-                return abort(400, "'type' parameter is not a known RR name")
+                return abort(
+                    400,
+                    f"'type' parameter {self.rdtype} is not a known RR name - {e}"
+                )
 
 
 @application.route('/resolv', methods=['GET', 'POST'])

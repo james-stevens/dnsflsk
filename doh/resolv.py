@@ -48,7 +48,8 @@ class ResolvError(Exception):
 
 class Query:  # pylint: disable=too-few-public-methods
     """ build a DNS query & resolve it """
-    def __init__(self, name, rdtype):
+
+    def __init__(self, name, rdtype, force_tcp=False):
         if not validation.is_valid_host(name):
             raise ResolvError(f"Hostname '{name}' failed validation")
 
@@ -57,17 +58,21 @@ class Query:  # pylint: disable=too-few-public-methods
         self.with_dnssec = True
         self.do = False
         self.cd = False
+        self.force_tcp = force_tcp
         self.servers = ["8.8.8.8", "1.1.1.1"]
 
     def resolv(self):
         """ resolve the query we hold """
         res = Resolver(self)
+        res.force_tcp = self.force_tcp
         return res.recv()
 
 
 class Resolver:
     """ resolve a DNS <Query> """
+
     def __init__(self, qry):
+        self.force_tcp = False
         self.qryid = None
         self.reply = None
         if not validation.is_valid_host(qry.name):
@@ -95,6 +100,7 @@ class Resolver:
         self.tries = 0
         msg = dns.message.make_query(qry.name,
                                      rdtype,
+                                     payload=30000,
                                      want_dnssec=(qry.do or qry.cd))
 
         self.question = bytearray(msg.to_wire())
@@ -144,6 +150,13 @@ class Resolver:
 
                 self.reply, (addr, _) = self.sock.recvfrom(DNS_MAX_RESP)
                 if self.match_id():
+                    self.decoded_resp = dns.message.from_wire(self.reply)
+
+                    if (self.decoded_resp.flags
+                            & DNS_FLAGS["TC"]) > 0 or self.force_tcp:
+                        self.reply = self.ask_in_tcp(addr)
+                        self.decoded_resp = dns.message.from_wire(self.reply)
+
                     if binary_format:
                         return self.reply
 
@@ -160,35 +173,53 @@ class Resolver:
         self.sock.close()
         return None
 
+    def ask_in_tcp(self, addr):
+        sock = socket.socket()
+        sock.connect((addr, 53))
+        sock.send(len(self.question).to_bytes(2, "big") + self.question)
+        sock.settimeout(0.2)
+        reply = bytes()
+        while (True):
+            try:
+                data_in = sock.recv(2000)
+            except socket.timeout:
+                sock.close()
+                return reply[2:]
+            reply = reply + data_in
+        sock.close()
+        return reply[2:]
+
     def decode_reply(self):
         """ decode binary {message} in DNS format to dictionary in DoH fmt """
-        msg = dns.message.from_wire(self.reply)
-        if (msg.flags & DNS_FLAGS["QR"]) == 0:
+        if (self.decoded_resp.flags & DNS_FLAGS["QR"]) == 0:
             return None  # REPLY flag not set
 
         out = {}
 
         for flag in DNS_FLAGS:
-            out[flag] = (msg.flags & DNS_FLAGS[flag]) != 0
+            out[flag] = (self.decoded_resp.flags & DNS_FLAGS[flag]) != 0
 
-        out["Status"] = msg.rcode()
+        out["Status"] = self.decoded_resp.rcode()
 
         out["Question"] = [{
             "name": rr.name.to_text(),
+            "TTL": rr.ttl,
             "type": rr.rdtype
-        } for rr in msg.question]
+        } for rr in self.decoded_resp.question]
 
         out["Answer"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
+            "TTL": rr.ttl,
             "type": rr.rdtype
-        } for rr in msg.answer for i in rr]
+        } for rr in self.decoded_resp.answer for i in rr]
 
         out["Authority"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
+            "TTL": rr.ttl,
             "type": rr.rdtype
-        } for rr in msg.authority for i in rr]
+        } for rr in self.decoded_resp.authority for i in rr]
 
         return out
 
@@ -205,6 +236,21 @@ def main():
                         "--name",
                         default="jrcs.net",
                         help="Name to query for")
+    parser.add_argument("-c",
+                        "--cd",
+                        default=False,
+                        help="With DO bit, DNSSEC",
+                        action="store_true")
+    parser.add_argument("-d",
+                        "--do",
+                        default=False,
+                        help="With DO bit, DNSSEC",
+                        action="store_true")
+    parser.add_argument("-T",
+                        "--force-tcp",
+                        default=False,
+                        help="Force TCP query",
+                        action="store_true")
     parser.add_argument("-t",
                         "--rdtype",
                         default="txt",
@@ -214,9 +260,9 @@ def main():
     if not validation.is_valid_host(args.name):
         print(f"ERROR: '{args.name}' is an invalid host name")
     else:
-        qry = Query(args.name, args.rdtype)
+        qry = Query(args.name, args.rdtype, args.force_tcp)
         qry.servers = args.servers.split(",")
-        qry.do = True
+        qry.do = (args.do or args.cd)
         print(json.dumps(qry.resolv(), indent=2))
 
 
