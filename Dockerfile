@@ -25,7 +25,7 @@ COPY etc /usr/local/etc/
 
 COPY bin /usr/local/bin/
 
-COPY doh /usr/local/doh/
-RUN python3 -m compileall /usr/local/doh
+COPY python /usr/local/python
+RUN python3 -m compileall /usr/local/python
 
 CMD [ "/sbin/init" ]
