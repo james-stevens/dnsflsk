@@ -175,17 +175,21 @@ class Resolver:
 
     def ask_in_tcp(self, addr):
         sock = socket.socket()
+        sock.setblocking(True)
         sock.connect((addr, 53))
         sock.send(len(self.question).to_bytes(2, "big") + self.question)
-        sock.settimeout(0.2)
+        sock.settimeout(5)
         reply = bytes()
-        while (True):
+        target_length = None
+        while target_length is None or len(reply) < target_length:
             try:
-                data_in = sock.recv(2000)
+                reply = reply + sock.recv(2000)
+                if target_length is None and len(reply) >= 2:
+                    target_length = reply[0]*256 + reply[1] + 2
             except socket.timeout:
                 sock.close()
                 return reply[2:]
-            reply = reply + data_in
+            sock.settimeout(0.2)
         sock.close()
         return reply[2:]
 

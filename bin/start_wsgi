@@ -8,5 +8,5 @@ if test "${DOH_SESSIONS}"
 		sessions=${DOH_SESSIONS}
 	fi
 
-cd /usr/local/doh
+cd /usr/local/python
 exec gunicorn --workers=${sessions} --bind unix:/ram/doh_$1.sock wsgi
