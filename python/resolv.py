@@ -8,6 +8,7 @@ import socket
 import select
 import argparse
 import os
+import base64
 import json
 import dns
 import dns.name
@@ -215,15 +216,25 @@ class Resolver:
             "name": rr.name.to_text(),
             "data": i.to_text(),
             "TTL": rr.ttl,
-            "type": rr.rdtype
+            "type": rr.rdtype,
+            "rdata": base64.b64encode(i.to_wire()).decode("utf8")
         } for rr in self.decoded_resp.answer for i in rr]
 
         out["Authority"] = [{
             "name": rr.name.to_text(),
             "data": i.to_text(),
             "TTL": rr.ttl,
-            "type": rr.rdtype
+            "type": rr.rdtype,
+            "rdata": base64.b64encode(i.to_wire()).decode("utf8")
         } for rr in self.decoded_resp.authority for i in rr]
+
+        out["Additional"] = [{
+            "name": rr.name.to_text(),
+            "data": i.to_text(),
+            "TTL": rr.ttl,
+            "type": rr.rdtype,
+            "rdata": base64.b64encode(i.to_wire()).decode("utf8")
+        } for rr in self.decoded_resp.additional for i in rr]
 
         return out
 
