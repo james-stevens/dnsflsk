@@ -40,7 +40,7 @@ if ("DOH_SYSLOG_SERVER" in os.environ
     syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
 
 
-class Query:
+class ApiQuery:
 
     def __init__(self, req):
         self.name = None
@@ -51,6 +51,7 @@ class Query:
         self.servers = dohServers
         self.binary_format = False
         self.bin_data = None
+        self.include_raw = False
 
         if req.content_type == "application/dns-message":
             self.queryFromLine(flask.request.get_data())
@@ -87,6 +88,7 @@ class Query:
         self.ct = sent_data.get("ct", default=False, type=bool)
         self.cd = sent_data.get("cd", default=False, type=bool)
         self.do = sent_data.get("do", default=False, type=bool)
+        self.include_raw = sent_data.get("raw", default=False, type=bool)
 
         if (not hasattr(self, "rdtype")) or self.rdtype is None:
             self.rdtype = 1
@@ -108,7 +110,7 @@ class Query:
 @application.route('/resolv', methods=['GET', 'POST'])
 @application.route('/dns/api/v1.0/resolv', methods=['GET', 'POST'])
 def resolver():
-    qry = Query(flask.request)
+    qry = ApiQuery(flask.request)
 
     for s in qry.servers:
         if not validation.is_valid_ipv4(s):
@@ -128,7 +130,9 @@ def resolver():
     except Exception as e:
         return abort(400, e)
 
-    rec = res.recv(qry.binary_format)
+    rec = res.recv(include_raw=qry.include_raw,
+                   binary_format=qry.binary_format)
+
     if rec is None:
         return abort(400, "No valid answer received")
 

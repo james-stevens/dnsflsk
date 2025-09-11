@@ -34,6 +34,18 @@ if "DOH_SERVERS" in os.environ:
     dohServers = os.environ["DOH_SERVERS"].split(",")
 
 
+def make_record(include_raw, rr, i):
+    ret = {
+        "name": rr.name.to_text(),
+        "data": i.to_text(),
+        "TTL": rr.ttl,
+        "type": rr.rdtype,
+    }
+    if include_raw:
+        ret["rdata"] = base64.b64encode(i.to_wire()).decode("utf8")
+    return ret
+
+
 def resolv_host(server):
     """ resolve {host} to an IP if its a host name """
     if validation.is_valid_ipv4(server):
@@ -59,6 +71,7 @@ class Query:  # pylint: disable=too-few-public-methods
         self.with_dnssec = True
         self.do = False
         self.cd = False
+        self.include_raw = False
         self.force_tcp = force_tcp
         self.servers = ["8.8.8.8", "1.1.1.1"]
 
@@ -66,7 +79,7 @@ class Query:  # pylint: disable=too-few-public-methods
         """ resolve the query we hold """
         res = Resolver(self)
         res.force_tcp = self.force_tcp
-        return res.recv()
+        return res.recv(self.include_raw)
 
 
 class Resolver:
@@ -79,10 +92,8 @@ class Resolver:
         if not validation.is_valid_host(qry.name):
             raise ResolvError(f"Hostname '{qry.name}' failed validation")
 
-        if isinstance(qry.rdtype, int):
-            rdtype = int(qry.rdtype)
-        else:
-            rdtype = dns.rdatatype.from_text(qry.rdtype)
+        rdtype = int(qry.rdtype) if isinstance(
+            qry.rdtype, int) else dns.rdatatype.from_text(qry.rdtype)
 
         if hasattr(qry, "servers"):
             self.servers = qry.servers
@@ -137,7 +148,7 @@ class Resolver:
         return (self.qryid is not None and self.reply[0] == self.qryid[0]
                 and self.reply[1] == self.qryid[1])
 
-    def recv(self, binary_format=False):
+    def recv(self, include_raw=False, binary_format=False):
         """ look for dns UDP response and read it """
         while self.tries < MAX_TRIES:
             if not self.send():
@@ -161,7 +172,7 @@ class Resolver:
                     if binary_format:
                         return self.reply
 
-                    if (ret := self.decode_reply()) is None:
+                    if (ret := self.decode_reply(include_raw)) is None:
                         return None
 
                     ret["Responder"] = addr
@@ -186,7 +197,7 @@ class Resolver:
             try:
                 reply = reply + sock.recv(2000)
                 if target_length is None and len(reply) >= 2:
-                    target_length = reply[0]*256 + reply[1] + 2
+                    target_length = reply[0] * 256 + reply[1] + 2
             except socket.timeout:
                 sock.close()
                 return reply[2:]
@@ -194,7 +205,7 @@ class Resolver:
         sock.close()
         return reply[2:]
 
-    def decode_reply(self):
+    def decode_reply(self, include_raw):
         """ decode binary {message} in DNS format to dictionary in DoH fmt """
         if (self.decoded_resp.flags & DNS_FLAGS["QR"]) == 0:
             return None  # REPLY flag not set
@@ -212,29 +223,18 @@ class Resolver:
             "type": rr.rdtype
         } for rr in self.decoded_resp.question]
 
-        out["Answer"] = [{
-            "name": rr.name.to_text(),
-            "data": i.to_text(),
-            "TTL": rr.ttl,
-            "type": rr.rdtype,
-            "rdata": base64.b64encode(i.to_wire()).decode("utf8")
-        } for rr in self.decoded_resp.answer for i in rr]
-
-        out["Authority"] = [{
-            "name": rr.name.to_text(),
-            "data": i.to_text(),
-            "TTL": rr.ttl,
-            "type": rr.rdtype,
-            "rdata": base64.b64encode(i.to_wire()).decode("utf8")
-        } for rr in self.decoded_resp.authority for i in rr]
-
-        out["Additional"] = [{
-            "name": rr.name.to_text(),
-            "data": i.to_text(),
-            "TTL": rr.ttl,
-            "type": rr.rdtype,
-            "rdata": base64.b64encode(i.to_wire()).decode("utf8")
-        } for rr in self.decoded_resp.additional for i in rr]
+        out["Answer"] = [
+            make_record(include_raw, rr, i) for rr in self.decoded_resp.answer
+            for i in rr
+        ]
+        out["Authority"] = [
+            make_record(include_raw, rr, i)
+            for rr in self.decoded_resp.authority for i in rr
+        ]
+        out["Additional"] = [
+            make_record(include_raw, rr, i)
+            for rr in self.decoded_resp.additional for i in rr
+        ]
 
         return out
 
@@ -256,6 +256,11 @@ def main():
                         default=False,
                         help="With DO bit, DNSSEC",
                         action="store_true")
+    parser.add_argument("-r",
+                        "--include-raw",
+                        default=False,
+                        help="Include raw RDATA in base64",
+                        action="store_true")
     parser.add_argument("-d",
                         "--do",
                         default=False,
@@ -276,6 +281,7 @@ def main():
         print(f"ERROR: '{args.name}' is an invalid host name")
     else:
         qry = Query(args.name, args.rdtype, args.force_tcp)
+        qry.include_raw = args.include_raw
         qry.servers = args.servers.split(",")
         qry.do = (args.do or args.cd)
         print(json.dumps(qry.resolv(), indent=2))
