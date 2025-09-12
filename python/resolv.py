@@ -78,6 +78,8 @@ class Query:  # pylint: disable=too-few-public-methods
     def resolv(self):
         """ resolve the query we hold """
         res = Resolver(self)
+        if self.do or self.cd:
+            self.include_raw = True
         res.force_tcp = self.force_tcp
         return res.recv(self.include_raw)
 

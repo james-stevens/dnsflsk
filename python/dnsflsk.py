@@ -60,6 +60,9 @@ class ApiQuery:
         elif len(req.args) > 0:
             self.queryFromJson(req.args)
 
+        if self.do or self.cd:
+            self.include_raw = True
+
         self.servers = self.servers.split(",")
         self.servers = [resolv.resolv_host(s) for s in self.servers]
 
