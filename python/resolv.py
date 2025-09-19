@@ -40,6 +40,7 @@ def make_record(include_raw, rr, i):
         "data": i.to_text(),
         "TTL": rr.ttl,
         "type": rr.rdtype,
+        "typename": dns.rdatatype.to_text(rr.rdtype)
     }
     if include_raw:
         ret["rdata"] = base64.b64encode(i.to_wire()).decode("utf8")
@@ -222,7 +223,8 @@ class Resolver:
         out["Question"] = [{
             "name": rr.name.to_text(),
             "TTL": rr.ttl,
-            "type": rr.rdtype
+            "type": rr.rdtype,
+            "typename": dns.rdatatype.to_text(rr.rdtype)
         } for rr in self.decoded_resp.question]
 
         out["Answer"] = [

@@ -91,6 +91,9 @@ class ApiQuery:
         self.ct = sent_data.get("ct", default=False, type=bool)
         self.cd = sent_data.get("cd", default=False, type=bool)
         self.do = sent_data.get("do", default=False, type=bool)
+        if sent_data.get("dnssec", default=False, type=bool):
+            self.do = True
+
         self.include_raw = sent_data.get("raw", default=False, type=bool)
 
         if (not hasattr(self, "rdtype")) or self.rdtype is None:
