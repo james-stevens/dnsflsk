@@ -132,12 +132,15 @@ def resolver():
         if with_syslog:
             syslog.syslog("{}/{} -> {}".format(
                 qry.name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
-        res = resolv.Resolver(qry)
     except Exception as e:
         return abort(400, e)
 
-    rec = res.recv(include_raw=qry.include_raw,
-                   binary_format=qry.binary_format)
+    resolver = resolv.Resolver(qry.servers)
+    rec = resolver.resolv(qry.name,
+                          qry.rdtype,
+                          include_raw=qry.include_raw,
+                          with_dnssec=qry.do,
+                          binary_format=qry.binary_format)
 
     if rec is None:
         return abort(400, "No valid answer received")
