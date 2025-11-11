@@ -9,6 +9,8 @@ import socket
 def is_valid_host(host):
     if host is None:
         return False
+    if host == ".":
+        return True
     return re.match(
         r'^(?!.{255}|.{253}[^.])([a-z0-9](?:[-a-z-0-9]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?[.]?$',
         host, re.IGNORECASE) is not None
