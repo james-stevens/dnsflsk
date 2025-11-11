@@ -39,6 +39,7 @@ if ("DOH_SYSLOG_SERVER" in os.environ
     syslogFacility = syslog.LOG_LOCAL6
     syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
 
+my_resolver = resolv.Resolver(dohServers)
 
 class ApiQuery:
 
@@ -135,9 +136,9 @@ def resolver():
     except Exception as e:
         return abort(400, e)
 
-    resolver = resolv.Resolver(qry.servers)
-    rec = resolver.resolv(qry.name,
+    rec = my_resolver.resolv(qry.name,
                           qry.rdtype,
+                          servers=qry.servers,
                           include_raw=qry.include_raw,
                           with_dnssec=qry.do,
                           binary_format=qry.binary_format)
