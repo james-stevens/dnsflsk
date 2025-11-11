@@ -1,0 +1,3 @@
+#! /bin/sh
+
+exec date +%Y%m%d.%H%M > /usr/local/etc/build.txt
