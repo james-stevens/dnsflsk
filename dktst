@@ -1,5 +1,3 @@
 #! /bin/sh
 
-docker run --read-only \
-	--env "DOH_SERVERS=192.168.8.110" \
-	-it -p 127.0.0.1:80:80 flask-doh
+./dkrun /bin/sh

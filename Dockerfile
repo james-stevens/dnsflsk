@@ -11,6 +11,8 @@ RUN apk add nginx curl
 RUN apk add python3 py3-gunicorn py3-flask
 RUN apk add py3-dnspython py3-requests
 
+RUN rm -f /var/cache/apk/*
+
 RUN rmdir /var/lib/nginx/tmp /var/log/nginx
 RUN ln -s /dev/shm /var/lib/nginx/tmp
 RUN ln -s /dev/shm /var/log/nginx
@@ -28,4 +30,5 @@ COPY bin /usr/local/bin/
 COPY python /usr/local/python
 RUN python3 -m compileall /usr/local/python
 
+RUN /usr/local/bin/make_build
 CMD [ "/sbin/init" ]
