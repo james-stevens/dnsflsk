@@ -46,6 +46,7 @@ class ApiQuery:
     def __init__(self, req):
         self.name = None
         self.rdtype = None
+        self.flags = resolv.DNS_FLAGS["RD"]
         self.do = False
         self.cd = None
         self.ct = False
@@ -61,7 +62,8 @@ class ApiQuery:
         elif len(req.args) > 0:
             self.queryFromJson(req.args)
 
-        if self.do or self.cd:
+        self.with_dnssec = (self.cd != 0 or self.do != 0 or self.dnssec != 0)
+        if self.with_dnssec:
             self.include_raw = True
 
         self.servers = self.servers.split(",")
@@ -89,13 +91,15 @@ class ApiQuery:
         self.rdtype = sent_data.get("type")
 
         self.servers = sent_data.get("servers", default=dohServers)
-        self.ct = sent_data.get("ct", default=False, type=bool)
-        self.cd = sent_data.get("cd", default=False, type=bool)
-        self.do = sent_data.get("do", default=False, type=bool)
-        if sent_data.get("dnssec", default=False, type=bool):
-            self.do = True
+        self.ct = sent_data.get("ct", default=0, type=int)
+        self.cd = sent_data.get("cd", default=0, type=int) != 0
+        self.do = sent_data.get("do", default=0, type=int) != 0
+        self.rd = sent_data.get("rd", default=resolv.DNS_FLAGS["RD"], type=int)
+        self.dnssec = sent_data.get("dnssec", default=0, type=int) != 0
 
         self.include_raw = sent_data.get("raw", default=False, type=bool)
+        if self.rd == 0:
+            self.flags = 0
 
         if (not hasattr(self, "rdtype")) or self.rdtype is None:
             self.rdtype = 1
@@ -140,7 +144,8 @@ def resolver():
                           qry.rdtype,
                           servers=qry.servers,
                           include_raw=qry.include_raw,
-                          with_dnssec=qry.do,
+                          flags=qry.flags,
+                          with_dnssec=qry.with_dnssec,
                           binary_format=qry.binary_format)
 
     if rec is None:
