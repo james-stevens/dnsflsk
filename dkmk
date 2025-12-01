@@ -1,4 +1,4 @@
 #! /bin/bash
 
 date +%Y%m%d.%H%M > build.txt
-docker image build -t flask-doh . $*
+docker image build -t $(cat list) . $*
