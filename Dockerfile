@@ -30,5 +30,5 @@ COPY bin /usr/local/bin/
 COPY python /usr/local/python
 RUN python3 -m compileall /usr/local/python
 
-RUN /usr/local/bin/make_build
+COPY build.txt /usr/local/etc/build.txt
 CMD [ "/sbin/init" ]

@@ -1,5 +1,5 @@
 #! /bin/sh
 
 docker run --read-only \
-	--env "DOH_SERVERS=8.8.8.8,1.1.1.1" \
+	--env "DOH_SERVERS=82.68.70.162,82.68.70.163" \
 	-it -p 127.0.0.1:80:80 -p 192.168.1.145:80:80 flask-doh $*

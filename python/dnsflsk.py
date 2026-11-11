@@ -13,6 +13,8 @@ import dns.rdatatype
 import dns.message
 import dns.resolver
 
+import misc
+
 
 class Empty:
     pass
@@ -40,6 +42,7 @@ if ("DOH_SYSLOG_SERVER" in os.environ
     syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
 
 my_resolver = resolv.Resolver(dohServers)
+
 
 class ApiQuery:
 
@@ -130,23 +133,29 @@ def resolver():
     if qry.name is None:
         return abort(400, "'name' parameter is missing")
 
-    if not validation.is_valid_host(qry.name):
+    try:
+        name = bytes([ord(x) for x in qry.name]).decode("utf8")
+    except ValueError:
+        name = qry.name
+
+    if (name := misc.utf8_to_puny(name)
+        ) is None or not validation.is_valid_host(name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
     try:
         if with_syslog:
             syslog.syslog("{}/{} -> {}".format(
-                qry.name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
+                name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
     except Exception as e:
         return abort(400, e)
 
-    rec = my_resolver.resolv(qry.name,
-                          qry.rdtype,
-                          servers=qry.servers,
-                          include_raw=qry.include_raw,
-                          flags=qry.flags,
-                          with_dnssec=qry.with_dnssec,
-                          binary_format=qry.binary_format)
+    rec = my_resolver.resolv(name,
+                             qry.rdtype,
+                             servers=qry.servers,
+                             include_raw=qry.include_raw,
+                             flags=qry.flags,
+                             with_dnssec=qry.with_dnssec,
+                             binary_format=qry.binary_format)
 
     if rec is None:
         return abort(400, "No valid answer received")

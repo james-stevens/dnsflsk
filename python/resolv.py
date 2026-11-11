@@ -15,6 +15,7 @@ import dns.message
 import dns.rdatatype
 import syslog
 
+import misc
 import validation
 
 DNS_MAX_RESP = 4096
@@ -89,7 +90,7 @@ class Resolver:
                 raise ResolvError("Invalid IP v4 Address for a Server")
 
     def resolv(self,
-               name,
+               in_name,
                rdtype,
                force_tcp=False,
                flags=DNS_FLAGS["RD"],
@@ -97,6 +98,8 @@ class Resolver:
                include_raw=False,
                binary_format=False,
                servers=None):
+
+        name = misc.utf8_to_puny(in_name)
         if not validation.is_valid_host(name):
             raise ResolvError(f"Hostname '{name}' failed validation")
 
@@ -112,9 +115,6 @@ class Resolver:
         self.include_raw = include_raw
         if with_dnssec:
             self.include_raw = True
-
-        if not validation.is_valid_host(name):
-            raise ResolvError(f"Hostname '{name}' failed validation")
 
         rdtype = int(rdtype) if isinstance(
             rdtype, int) else dns.rdatatype.from_text(rdtype)
@@ -300,21 +300,18 @@ def main():
                         action="store_true")
     args = parser.parse_args()
 
-    if not validation.is_valid_host(args.name):
-        print(f"ERROR: '{args.name}' is an invalid host name")
-    else:
-        res = Resolver()
-        flags = 0 if args.no_recursion else DNS_FLAGS["RD"]
-        servers = args.servers.split(",") if args.servers else None
-        print(
-            json.dumps(res.resolv(args.name,
-                                  args.rdtype,
-                                  with_dnssec=args.with_dnssec,
-                                  include_raw=args.include_raw,
-                                  force_tcp=args.force_tcp,
-                                  servers=servers,
-                                  flags=flags),
-                       indent=2))
+    res = Resolver()
+    flags = 0 if args.no_recursion else DNS_FLAGS["RD"]
+    servers = args.servers.split(",") if args.servers else None
+    print(
+        json.dumps(res.resolv(args.name,
+                              args.rdtype,
+                              with_dnssec=args.with_dnssec,
+                              include_raw=args.include_raw,
+                              force_tcp=args.force_tcp,
+                              servers=servers,
+                              flags=flags),
+                   indent=2))
 
 
 if __name__ == "__main__":
