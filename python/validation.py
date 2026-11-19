@@ -36,5 +36,5 @@ def is_valid_ipv4(address):
 
 # for testing
 if __name__ == "__main__":
-    for host in ["A_A", "www.gstatic.com.", "m.files.bbci.co.uk."]:
+    for host in ["A_A", "www.gstatic.com.", "m.files.bbci.co.uk.", "."]:
         print(host, is_valid_host(host))
