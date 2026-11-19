@@ -2,14 +2,14 @@
 # (c) Copyright 2019-2022, James Stevens ... see LICENSE for details
 # Alternative license arrangements possible, contact me for more information
 
-mkdir -p /ram/nginx/
+mkdir -p /run/nginx/
 
 if test -f /opt/pems/certkey.pem
 	then
-		ln -s /opt/pems/certkey.pem /ram/certkey.pem
-		touch -r /opt/pems/certkey.pem /ram/certkey.date
+		ln -s /opt/pems/certkey.pem /run/certkey.pem
+		touch -r /opt/pems/certkey.pem /run/certkey.date
 	else
-		ln -s /usr/local/etc/certkey.pem /ram/certkey.pem
+		ln -s /usr/local/etc/certkey.pem /run/certkey.pem
 	fi
 
 sleep 1
