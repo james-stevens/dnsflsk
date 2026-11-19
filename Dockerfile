@@ -1,11 +1,11 @@
-FROM alpine:3.22
+FROM alpine:3.24
 
 RUN apk update
 RUN apk upgrade
 
-RUN rmdir /tmp
+RUN rm -rf /tmp /run
 RUN ln -s /dev/shm /tmp
-RUN ln -s /dev/shm /ram
+RUN ln -s /dev/shm /run
 
 RUN apk add nginx curl
 RUN apk add python3 py3-gunicorn py3-flask

@@ -7,6 +7,9 @@ import idna
 
 
 def puny_to_utf8(name):
+    if name == ".":
+        return "."
+
     try:
         idn = idna.decode(name)
         return idn
@@ -20,6 +23,9 @@ def puny_to_utf8(name):
 
 
 def utf8_to_puny(utf8):
+    if utf8 == ".":
+        return "."
+
     try:
         puny = idna.encode(utf8)
         return puny.decode("utf-8")
