@@ -12,7 +12,10 @@ def get_port(server):
         return server, 53
     a = server.split(":")
     if len(a) == 2 and a[1].isdigit():
-        return a[0], int(a[1])
+        port = int(a[1])
+        if port < 1 or port > 65535:
+            return server, 53
+        return a[0], port
     return server, 53
 
 
