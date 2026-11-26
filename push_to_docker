@@ -11,3 +11,5 @@ do
 	docker tag ${id} jamesstevens/${me}:${ver}
 	docker push jamesstevens/${me}:${ver}
 done
+
+test -f docker-README.md && ~/bin/dh_readme jamesstevens/$(basename ${PWD}) docker-README.md
