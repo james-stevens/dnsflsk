@@ -46,7 +46,7 @@ my_resolver = resolv.Resolver(dohServers)
 
 class ApiQuery:
 
-    def __init__(self, req):
+    def __init__(self):
         self.name = None
         self.rdtype = None
         self.flags = resolv.DNS_FLAGS["RD"]
@@ -58,6 +58,7 @@ class ApiQuery:
         self.bin_data = None
         self.include_raw = False
 
+    def setup(self, req):
         if req.content_type == "application/dns-message":
             self.queryFromLine(flask.request.get_data())
         elif len(req.form) > 0:
@@ -70,7 +71,15 @@ class ApiQuery:
             self.include_raw = True
 
         self.servers = self.servers.split(",")
-        self.servers = [resolv.resolv_host(s) for s in self.servers]
+        self.svr_ports = [misc.get_port(svr) for svr in self.servers]
+        for svr, port in self.svr_ports:
+            if svr is None or not validation.is_valid_server(svr):
+                return False, f"Bad server specification '{svr}'"
+
+        self.servers = [
+            f"{resolv.resolv_host(svr)}:{port}" for svr, port in self.svr_ports
+        ]
+        return True, None
 
     def queryFromLine(self, bin_data):
         self.bin_data = bin_data
@@ -124,11 +133,11 @@ class ApiQuery:
 @application.route('/resolv', methods=['GET', 'POST'])
 @application.route('/dns/api/v1.0/resolv', methods=['GET', 'POST'])
 def resolver():
-    qry = ApiQuery(flask.request)
+    qry = ApiQuery()
+    res, err = qry.setup(flask.request)
 
-    for s in qry.servers:
-        if not validation.is_valid_ipv4(s):
-            return abort(400, "Bad server IPv4 Address")
+    if not res:
+        return abort(400, err)
 
     if qry.name is None:
         return abort(400, "'name' parameter is missing")
