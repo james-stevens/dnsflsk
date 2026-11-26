@@ -4,6 +4,19 @@
 """ Support functions for domains """
 
 import idna
+import sys
+
+
+def get_port(server):
+    if server.find(":") < 0:
+        return server, 53
+    a = server.split(":")
+    if len(a) == 2 and a[1].isdigit():
+        port = int(a[1])
+        if port < 1 or port > 65535:
+            return server, 53
+        return a[0], port
+    return server, 53
 
 
 def puny_to_utf8(name):
@@ -36,3 +49,7 @@ def utf8_to_puny(utf8):
         except UnicodeError:
             return None
     return None
+
+
+if __name__ == "__main__":
+    print(get_port(sys.argv[1]))

@@ -108,6 +108,8 @@ class Resolver:
         else:
             self.this_servers = self.servers
 
+        self.svr_ports = [misc.get_port(svr) for svr in self.this_servers]
+
         self.qryid = None
         self.reply = None
         self.flags = flags
@@ -132,9 +134,10 @@ class Resolver:
     def send_all(self):
         """ send the query to all servers """
         ret = False
-        for each_svr in self.this_servers:
+        for each_svr, each_port in self.svr_ports:
             try:
-                sent_len = self.sock.sendto(self.question, (each_svr, 53))
+                sent_len = self.sock.sendto(self.question,
+                                            (each_svr, each_port))
                 ret = ret or (sent_len == len(self.question))
             # pylint: disable=broad-except
             except Exception as err:
@@ -196,10 +199,16 @@ class Resolver:
 
         return None
 
+    def find_port(self, addr):
+        for svr, port in self.svr_ports:
+            if svr == addr:
+                return port
+        return 53
+
     def ask_in_tcp(self, addr):
         sock = socket.socket()
         sock.setblocking(True)
-        sock.connect((addr, 53))
+        sock.connect((addr, self.find_port(addr)))
         sock.send(len(self.question).to_bytes(2, "big") + self.question)
         sock.settimeout(5)
         reply = bytes()

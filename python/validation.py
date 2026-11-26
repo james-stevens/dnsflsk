@@ -6,6 +6,12 @@ import re
 import socket
 
 
+def is_valid_server(svr):
+    if svr is None:
+        return False
+    return is_valid_ipv4(svr) or is_valid_host(svr)
+
+
 def is_valid_host(host):
     if host is None:
         return False
