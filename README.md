@@ -65,7 +65,7 @@ options:
 
 # Running at Production Quality
 
-For production use, I strongly recommend you simply use the container `jamesstevens / flask-doh`, or build the container yourself by running
+For production use, I strongly recommend you simply use the container `jamesstevens / json-doh-proxy`, or build the container yourself by running
 `./dkmk`.
 
 By default, the container will send its queries to the Google rsolvers `8.8.8.8` & `8.4.4.8`. By default

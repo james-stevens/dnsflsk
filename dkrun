@@ -1,5 +1,10 @@
 #! /bin/sh
 
-docker run --read-only \
+
+local_icann_roots="192.168.3.32:5300,192.168.3.22:5300"
+
+# docker run --read-only \
+docker run \
+	--env LOCAL_ICANN_ROOT="${local_icann_roots}" \
 	--env "DOH_SERVERS=82.68.70.162,82.68.70.163" \
-	-it -p 127.0.0.2:80:80 -p 192.168.1.142:80:80 flask-doh $*
+	-it -p 127.0.0.2:80:80 -p 192.168.1.142:80:80 json-doh-proxy $*
