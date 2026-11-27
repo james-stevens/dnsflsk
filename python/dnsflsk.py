@@ -35,8 +35,7 @@ if "DOH_SERVERS" in os.environ:
     dohServers = os.environ["DOH_SERVERS"]
 
 with_syslog = False
-if ("DOH_SYSLOG_SERVER" in os.environ
-        and os.environ["DOH_SYSLOG_SERVER"] != "-"):
+if ("DOH_SYSLOG_SERVER" in os.environ and os.environ["DOH_SYSLOG_SERVER"] != "-"):
     with_syslog = True
     syslogFacility = syslog.LOG_LOCAL6
     syslog.openlog(logoption=syslog.LOG_PID, facility=syslogFacility)
@@ -76,9 +75,7 @@ class ApiQuery:
             if svr is None or not validation.is_valid_server(svr):
                 return False, f"Bad server specification '{svr}'"
 
-        self.servers = [
-            f"{resolv.resolv_host(svr)}:{port}" for svr, port in self.svr_ports
-        ]
+        self.servers = [f"{resolv.resolv_host(svr)}:{port}" for svr, port in self.svr_ports]
         return True, None
 
     def queryFromLine(self, bin_data):
@@ -90,10 +87,7 @@ class ApiQuery:
         self.name = rr.name.to_text()
         self.rdtype = rr.rdtype
 
-        flags = [
-            flag for flag in resolv.DNS_FLAGS
-            if (msg.flags & resolv.DNS_FLAGS[flag])
-        ]
+        flags = [flag for flag in resolv.DNS_FLAGS if (msg.flags & resolv.DNS_FLAGS[flag])]
         self.ct = "CT" in flags
         self.do = "DO" in flags
         self.cd = "CD" in flags
@@ -118,16 +112,12 @@ class ApiQuery:
         elif self.rdtype.isdigit():
             self.rdtype = int(self.rdtype)
             if self.rdtype <= 0 or self.rdtype >= 65535:
-                return abort(
-                    400, f"'type' parameter is out of range ({self.rdtype})")
+                return abort(400, f"'type' parameter is out of range ({self.rdtype})")
         else:
             try:
                 self.rdtype = dns.rdatatype.from_text(self.rdtype)
             except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
-                return abort(
-                    400,
-                    f"'type' parameter {self.rdtype} is not a known RR name - {e}"
-                )
+                return abort(400, f"'type' parameter {self.rdtype} is not a known RR name - {e}")
 
 
 @application.route('/resolv', methods=['GET', 'POST'])
@@ -147,14 +137,12 @@ def resolver():
     except ValueError:
         name = qry.name
 
-    if (name := misc.utf8_to_puny(name)
-        ) is None or not validation.is_valid_host(name):
+    if (name := misc.utf8_to_puny(name)) is None or not validation.is_valid_host(name):
         return abort(400, "'name' parameter is not a valid FQDN")
 
     try:
         if with_syslog:
-            syslog.syslog("{}/{} -> {}".format(
-                name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
+            syslog.syslog("{}/{} -> {}".format(name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
     except Exception as e:
         return abort(400, e)
 
