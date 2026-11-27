@@ -3,8 +3,9 @@
 # Alternative license arrangements possible, contact me for more information
 """ Support functions for domains """
 
-import idna
 import sys
+
+import idna
 
 
 def get_port(server):

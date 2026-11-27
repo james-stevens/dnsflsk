@@ -31,10 +31,10 @@ def is_valid_ipv4(address):
     except AttributeError:  # no inet_pton here, sorry
         try:
             socket.inet_aton(address)
-        except socket.error:
+        except OSError:
             return False
         return address.count('.') == 3
-    except socket.error:  # not a valid address
+    except OSError:  # not a valid address
         return False
 
     return True
