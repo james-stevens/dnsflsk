@@ -9,6 +9,7 @@ import argparse
 import os
 import base64
 import json
+import random
 import dns
 import dns.name
 import dns.message
@@ -42,6 +43,8 @@ STATUS_NAME = {
     9: ["NOTZONE", "Name not in zone"]
 }
 
+BEST_ICANN_ROOT = [pfx + ".root-servers.net." for pfx in "dfjk"]
+
 
 def resolv_host(server):
     """ resolve {host} to an IP if its a host name """
@@ -52,6 +55,20 @@ def resolv_host(server):
     return None
 
 
+def decode_servers(servers):
+    root_mode = False
+    if servers == "icann-root" or (len(servers) == 1
+                                   and servers[0] == "icann-root"):
+        servers = os.environ.get("LOCAL_ICANN_ROOT",
+                                 random.sample(BEST_ICANN_ROOT, 2))
+        root_mode = True
+    if isinstance(servers, list):
+        return root_mode, servers
+    elif isinstance(servers, str):
+        return root_mode, servers.split(",")
+    return False, None
+
+
 class ResolvError(Exception):
     """ custom error """
 
@@ -60,6 +77,7 @@ class Resolver:
     """ resolve a DNS <Query> """
 
     def __init__(self, servers=None):
+        self.root_mode = False
         self.servers = None
         if servers is None:
             with open("/etc/resolv.conf", "r") as fd:
@@ -72,11 +90,7 @@ class Resolver:
                 if resline[0] == "nameserver"
             ]
         else:
-            if servers is not None:
-                if isinstance(servers, list):
-                    self.servers = servers
-                elif isinstance(servers, str):
-                    self.servers = servers.split(",")
+            self.root_mode, self.servers = decode_servers(servers)
 
         if self.servers is None or not isinstance(self.servers, list):
             raise ResolvError("Failed to identify servers")
@@ -103,16 +117,16 @@ class Resolver:
         if not validation.is_valid_host(name):
             raise ResolvError(f"Hostname '{name}' failed validation")
 
-        if servers is not None:
-            self.this_servers = servers
-        else:
-            self.this_servers = self.servers
-
+        self.this_root_mode, self.this_servers = (self.root_mode, self.servers) if servers is None else decode_servers(
+            servers)
         self.svr_ports = [misc.get_port(svr) for svr in self.this_servers]
 
         self.qryid = None
         self.reply = None
         self.flags = flags
+        if self.this_root_mode and self.flags&DNS_FLAGS["RD"]:
+            raise ResolvError("ROOT mode requested with RD=1")
+
         self.force_tcp = force_tcp
         self.include_raw = include_raw
         if with_dnssec:
@@ -179,19 +193,20 @@ class Resolver:
                 if len(rlist) <= 0:
                     break
 
-                self.reply, (addr, _) = self.sock.recvfrom(DNS_MAX_RESP)
+                self.reply, (rmt_addr,
+                             rmt_port) = self.sock.recvfrom(DNS_MAX_RESP)
                 if self.match_id():
                     self.decoded_resp = dns.message.from_wire(self.reply)
 
                     if (self.decoded_resp.flags
                             & DNS_FLAGS["TC"]) > 0 or self.force_tcp:
-                        self.reply = self.ask_in_tcp(addr)
+                        self.reply = self.ask_in_tcp(rmt_addr, rmt_port)
                         self.decoded_resp = dns.message.from_wire(self.reply)
 
                     if (ret := self.decode_reply()) is None:
                         return None
 
-                    ret["Responder"] = addr
+                    ret["Responder"] = f"{rmt_addr}:{rmt_port}"
                     return ret
 
             self.expiry += int(self.expiry / 2) if self.expiry > 2 else 1
@@ -205,10 +220,10 @@ class Resolver:
                 return port
         return 53
 
-    def ask_in_tcp(self, addr):
+    def ask_in_tcp(self, addr, port=53):
         sock = socket.socket()
         sock.setblocking(True)
-        sock.connect((addr, self.find_port(addr)))
+        sock.connect((addr, port))
         sock.send(len(self.question).to_bytes(2, "big") + self.question)
         sock.settimeout(5)
         reply = bytes()
@@ -311,14 +326,13 @@ def main():
 
     res = Resolver()
     flags = 0 if args.no_recursion else DNS_FLAGS["RD"]
-    servers = args.servers.split(",") if args.servers else None
     print(
         json.dumps(res.resolv(args.name,
                               args.rdtype,
                               with_dnssec=args.with_dnssec,
                               include_raw=args.include_raw,
                               force_tcp=args.force_tcp,
-                              servers=servers,
+                              servers=args.servers,
                               flags=flags),
                    indent=2))
 
