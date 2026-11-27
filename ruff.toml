@@ -1,0 +1,3 @@
+line-length = 119
+lint.extend-select = ["C4", "SIM", "TCH", "B", "F"]
+lint.ignore = ["SIM105"]

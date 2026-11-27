@@ -2,18 +2,17 @@
 # (c) Copyright 2019-2020, James Stevens ... see LICENSE for details
 # Alternative license arrangements possible, contact me for more information
 
-import resolv
-import validation
 import os
 import syslog
 
-import flask
 import dns
-import dns.rdatatype
 import dns.message
+import dns.rdatatype
 import dns.resolver
-
+import flask
 import misc
+import resolv
+import validation
 
 
 class Empty:
@@ -56,14 +55,19 @@ class ApiQuery:
         self.binary_format = False
         self.bin_data = None
         self.include_raw = False
+        self.dnssec = 0
 
     def setup(self, req):
+        err = None
         if req.content_type == "application/dns-message":
             self.queryFromLine(flask.request.get_data())
         elif len(req.form) > 0:
-            self.queryFromJson(req.form)
+            err = self.queryFromJson(req.form)
         elif len(req.args) > 0:
-            self.queryFromJson(req.args)
+            err = self.queryFromJson(req.args)
+
+        if err is not None:
+            return False, err
 
         self.with_dnssec = (self.cd != 0 or self.do != 0 or self.dnssec != 0)
         if self.with_dnssec:
@@ -71,7 +75,7 @@ class ApiQuery:
 
         self.root_mode, self.servers = resolv.decode_servers(self.servers)
         self.svr_ports = [misc.get_port(svr) for svr in self.servers]
-        for svr, port in self.svr_ports:
+        for svr, _port in self.svr_ports:
             if svr is None or not validation.is_valid_server(svr):
                 return False, f"Bad server specification '{svr}'"
 
@@ -112,12 +116,13 @@ class ApiQuery:
         elif self.rdtype.isdigit():
             self.rdtype = int(self.rdtype)
             if self.rdtype <= 0 or self.rdtype >= 65535:
-                return abort(400, f"'type' parameter is out of range ({self.rdtype})")
+                return f"'type' parameter is out of range ({self.rdtype})"
         else:
             try:
                 self.rdtype = dns.rdatatype.from_text(self.rdtype)
-            except (dns.rdatatype.UnknownRdatatype, ValueError) as e:
-                return abort(400, f"'type' parameter {self.rdtype} is not a known RR name - {e}")
+            except (dns.rdatatype.UnknownRdatatype, ValueError) as exc:
+                return f"'type' parameter {self.rdtype} is not a known RR name - {exc}"
+        return None
 
 
 @application.route('/resolv', methods=['GET', 'POST'])
@@ -142,9 +147,9 @@ def resolver():
 
     try:
         if with_syslog:
-            syslog.syslog("{}/{} -> {}".format(name, dns.rdatatype.to_text(qry.rdtype), qry.servers))
-    except Exception as e:
-        return abort(400, e)
+            syslog.syslog(f"{name}/{dns.rdatatype.to_text(qry.rdtype)} -> {qry.servers}")
+    except (OSError, TypeError, ValueError, dns.exception.DNSException) as exc:
+        return abort(400, str(exc))
 
     rec = my_resolver.resolv(name,
                              qry.rdtype,

@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: python3 -m pip install -r requirements-dev.txt
+
+      - name: Ruff
+        run: ruff check
+
+      - name: YAPF
+        run: python3 -m yapf --diff --recursive python tests
+
+      - name: Pylint errors
+        run: >-
+          python3 -m pylint -E
+          python/dnsflsk.py
+          python/resolv.py
+          python/misc.py
+          python/validation.py
+          python/wsgi.py
+        env:
+          PYTHONPATH: python
+
+      - name: Compile
+        run: python3 -m compileall -q python tests
+
+      - name: Pytest
+        run: python3 -m pytest
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the image and hit the HTTP endpoint
+        run: |
+          set -euo pipefail
+          cleanup() {
+            docker rm -f doh-ci >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          date +%Y%m%d.%H%M > build.txt
+          docker build -t json-doh-proxy:ci .
+          docker run -d --name doh-ci -p 127.0.0.1:8080:80 json-doh-proxy:ci
+          for _ in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:8080/ >/tmp/doh-body; then
+              cat /tmp/doh-body
+              grep -q "Welcome to the DNS/API" /tmp/doh-body
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "The container did not answer on port 80" >&2
+          docker logs doh-ci >&2 || true
+          exit 1

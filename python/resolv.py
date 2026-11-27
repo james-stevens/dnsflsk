@@ -3,19 +3,19 @@
 # Alternative license arrangements possible, contact me for more information
 """ module to resolve DNS queries into DoH JSON objects """
 
-import socket
-import select
 import argparse
-import os
 import base64
 import json
+import os
 import random
-import dns
-import dns.name
-import dns.message
-import dns.rdatatype
+import select
+import socket
 import syslog
 
+import dns
+import dns.message
+import dns.name
+import dns.rdatatype
 import misc
 import validation
 
@@ -49,7 +49,8 @@ def resolv_host(server):
 
 def decode_servers(servers):
     root_mode = False
-    if servers == "icann-root" or (len(servers) == 1 and servers[0] == "icann-root"):
+    if servers == "icann-root" or (isinstance(servers,
+                                              (list, tuple)) and len(servers) == 1 and servers[0] == "icann-root"):
         servers = os.environ.get("LOCAL_ICANN_ROOT", random.sample(BEST_ICANN_ROOT, 2))
         root_mode = True
     if isinstance(servers, list):
@@ -71,9 +72,7 @@ class Resolver:
         self.servers = None
         if servers is None:
             with open("/etc/resolv.conf", "r") as fd:
-                etc_resolv = [
-                    line.strip().split() for line in fd.readlines() if line[0] != '#' and line[:11] == "nameserver "
-                ]
+                etc_resolv = [line.strip().split() for line in fd if line[0] != '#' and line[:11] == "nameserver "]
             self.servers = [resline[1] for resline in etc_resolv if resline[0] == "nameserver"]
         else:
             self.root_mode, self.servers = decode_servers(servers)
@@ -114,6 +113,7 @@ class Resolver:
             raise ResolvError("ROOT mode requested with RD=1")
 
         self.force_tcp = force_tcp
+        self.binary_format = binary_format
         self.include_raw = include_raw
         if with_dnssec:
             self.include_raw = True
@@ -133,9 +133,8 @@ class Resolver:
             try:
                 sent_len = self.sock.sendto(self.question, (each_svr, each_port))
                 ret = ret or (sent_len == len(self.question))
-            # pylint: disable=broad-except
-            except Exception as err:
-                syslog.syslog(f"RESOLVER: send_all - {str(err)}")
+            except (OSError, TypeError) as err:
+                syslog.syslog(f"RESOLVER: send_all - {err!s}")
 
         return ret  # True if at least one worked
 
@@ -183,6 +182,9 @@ class Resolver:
                     if (ret := self.decode_reply()) is None:
                         return None
 
+                    if self.binary_format:
+                        return self.reply
+
                     ret["Responder"] = f"{rmt_addr}:{rmt_port}"
                     return ret
 
@@ -203,14 +205,14 @@ class Resolver:
         sock.connect((addr, port))
         sock.send(len(self.question).to_bytes(2, "big") + self.question)
         sock.settimeout(5)
-        reply = bytes()
+        reply = b""
         target_length = None
         while target_length is None or len(reply) < target_length:
             try:
                 reply = reply + sock.recv(2000)
                 if target_length is None and len(reply) >= 2:
                     target_length = reply[0] * 256 + reply[1] + 2
-            except socket.timeout:
+            except TimeoutError:
                 sock.close()
                 return reply[2:]
             sock.settimeout(0.2)
@@ -236,8 +238,8 @@ class Resolver:
 
         out = {}
 
-        for flag in DNS_FLAGS:
-            out[flag] = (self.decoded_resp.flags & DNS_FLAGS[flag]) != 0
+        for flag, mask in DNS_FLAGS.items():
+            out[flag] = (self.decoded_resp.flags & mask) != 0
 
         rcode = self.decoded_resp.rcode()
         out["Status"] = rcode
