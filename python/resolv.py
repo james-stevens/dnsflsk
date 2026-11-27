@@ -21,15 +21,7 @@ import validation
 
 DNS_MAX_RESP = 4096
 MAX_TRIES = 5
-DNS_FLAGS = {
-    "QR": 0x8000,
-    "AA": 0x0400,
-    "TC": 0x0200,
-    "RD": 0x0100,
-    "AD": 0x20,
-    "CD": 0x40,
-    "RA": 0x80
-}
+DNS_FLAGS = {"QR": 0x8000, "AA": 0x0400, "TC": 0x0200, "RD": 0x0100, "AD": 0x20, "CD": 0x40, "RA": 0x80}
 STATUS_NAME = {
     0: ["NOERROR", "DNS Query completed successfully"],
     1: ["FORMERR", "DNS Query Format Error"],
@@ -57,10 +49,8 @@ def resolv_host(server):
 
 def decode_servers(servers):
     root_mode = False
-    if servers == "icann-root" or (len(servers) == 1
-                                   and servers[0] == "icann-root"):
-        servers = os.environ.get("LOCAL_ICANN_ROOT",
-                                 random.sample(BEST_ICANN_ROOT, 2))
+    if servers == "icann-root" or (len(servers) == 1 and servers[0] == "icann-root"):
+        servers = os.environ.get("LOCAL_ICANN_ROOT", random.sample(BEST_ICANN_ROOT, 2))
         root_mode = True
     if isinstance(servers, list):
         return root_mode, servers
@@ -82,13 +72,9 @@ class Resolver:
         if servers is None:
             with open("/etc/resolv.conf", "r") as fd:
                 etc_resolv = [
-                    line.strip().split() for line in fd.readlines()
-                    if line[0] != '#' and line[:11] == "nameserver "
+                    line.strip().split() for line in fd.readlines() if line[0] != '#' and line[:11] == "nameserver "
                 ]
-            self.servers = [
-                resline[1] for resline in etc_resolv
-                if resline[0] == "nameserver"
-            ]
+            self.servers = [resline[1] for resline in etc_resolv if resline[0] == "nameserver"]
         else:
             self.root_mode, self.servers = decode_servers(servers)
 
@@ -117,14 +103,14 @@ class Resolver:
         if not validation.is_valid_host(name):
             raise ResolvError(f"Hostname '{name}' failed validation")
 
-        self.this_root_mode, self.this_servers = (self.root_mode, self.servers) if servers is None else decode_servers(
-            servers)
+        self.this_root_mode, self.this_servers = (self.root_mode,
+                                                  self.servers) if servers is None else decode_servers(servers)
         self.svr_ports = [misc.get_port(svr) for svr in self.this_servers]
 
         self.qryid = None
         self.reply = None
         self.flags = flags
-        if self.this_root_mode and self.flags&DNS_FLAGS["RD"]:
+        if self.this_root_mode and self.flags & DNS_FLAGS["RD"]:
             raise ResolvError("ROOT mode requested with RD=1")
 
         self.force_tcp = force_tcp
@@ -132,16 +118,11 @@ class Resolver:
         if with_dnssec:
             self.include_raw = True
 
-        rdtype = int(rdtype) if isinstance(
-            rdtype, int) else dns.rdatatype.from_text(rdtype)
+        rdtype = int(rdtype) if isinstance(rdtype, int) else dns.rdatatype.from_text(rdtype)
 
         self.expiry = 1
         self.tries = 0
-        msg = dns.message.make_query(name,
-                                     rdtype,
-                                     payload=30000,
-                                     want_dnssec=with_dnssec,
-                                     flags=self.flags)
+        msg = dns.message.make_query(name, rdtype, payload=30000, want_dnssec=with_dnssec, flags=self.flags)
         self.question = bytearray(msg.to_wire())
         return self.do_resolv()
 
@@ -150,8 +131,7 @@ class Resolver:
         ret = False
         for each_svr, each_port in self.svr_ports:
             try:
-                sent_len = self.sock.sendto(self.question,
-                                            (each_svr, each_port))
+                sent_len = self.sock.sendto(self.question, (each_svr, each_port))
                 ret = ret or (sent_len == len(self.question))
             # pylint: disable=broad-except
             except Exception as err:
@@ -174,8 +154,7 @@ class Resolver:
 
     def match_id(self):
         """ cehck the DNS quiery Id field matches what we asked """
-        return (self.qryid is not None and self.reply[0] == self.qryid[0]
-                and self.reply[1] == self.qryid[1])
+        return (self.qryid is not None and self.reply[0] == self.qryid[0] and self.reply[1] == self.qryid[1])
 
     def do_resolv(self):
         """ look for dns UDP response and read it """
@@ -193,13 +172,11 @@ class Resolver:
                 if len(rlist) <= 0:
                     break
 
-                self.reply, (rmt_addr,
-                             rmt_port) = self.sock.recvfrom(DNS_MAX_RESP)
+                self.reply, (rmt_addr, rmt_port) = self.sock.recvfrom(DNS_MAX_RESP)
                 if self.match_id():
                     self.decoded_resp = dns.message.from_wire(self.reply)
 
-                    if (self.decoded_resp.flags
-                            & DNS_FLAGS["TC"]) > 0 or self.force_tcp:
+                    if (self.decoded_resp.flags & DNS_FLAGS["TC"]) > 0 or self.force_tcp:
                         self.reply = self.ask_in_tcp(rmt_addr, rmt_port)
                         self.decoded_resp = dns.message.from_wire(self.reply)
 
@@ -274,50 +251,22 @@ class Resolver:
             "typename": dns.rdatatype.to_text(rr.rdtype)
         } for rr in self.decoded_resp.question]
 
-        out["Answer"] = [
-            self.json_record(rr, i) for rr in self.decoded_resp.answer
-            for i in rr
-        ]
-        out["Authority"] = [
-            self.json_record(rr, i) for rr in self.decoded_resp.authority
-            for i in rr
-        ]
-        out["Additional"] = [
-            self.json_record(rr, i) for rr in self.decoded_resp.additional
-            for i in rr
-        ]
+        out["Answer"] = [self.json_record(rr, i) for rr in self.decoded_resp.answer for i in rr]
+        out["Authority"] = [self.json_record(rr, i) for rr in self.decoded_resp.authority for i in rr]
+        out["Additional"] = [self.json_record(rr, i) for rr in self.decoded_resp.additional for i in rr]
 
         return out
 
 
 def main():
     """ main """
-    parser = argparse.ArgumentParser(
-        description='This is a wrapper to test the resolver code')
+    parser = argparse.ArgumentParser(description='This is a wrapper to test the resolver code')
     parser.add_argument("-s", "--servers", help="Resolvers to query")
-    parser.add_argument("-n",
-                        "--name",
-                        default="jrcs.net",
-                        help="Name to query for")
-    parser.add_argument("-t",
-                        "--rdtype",
-                        default="txt",
-                        help="RR Type to query for")
-    parser.add_argument("-r",
-                        "--include-raw",
-                        default=False,
-                        help="Include raw RDATA in base64",
-                        action="store_true")
-    parser.add_argument("-d",
-                        "--with_dnssec",
-                        default=False,
-                        help="With DNSSEC",
-                        action="store_true")
-    parser.add_argument("-T",
-                        "--force-tcp",
-                        default=False,
-                        help="Force TCP query",
-                        action="store_true")
+    parser.add_argument("-n", "--name", default="jrcs.net", help="Name to query for")
+    parser.add_argument("-t", "--rdtype", default="txt", help="RR Type to query for")
+    parser.add_argument("-r", "--include-raw", default=False, help="Include raw RDATA in base64", action="store_true")
+    parser.add_argument("-d", "--with_dnssec", default=False, help="With DNSSEC", action="store_true")
+    parser.add_argument("-T", "--force-tcp", default=False, help="Force TCP query", action="store_true")
     parser.add_argument("-R",
                         "--no-recursion",
                         help="Make authritative, not recursive query (RD=0)",
