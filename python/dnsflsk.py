@@ -70,7 +70,7 @@ class ApiQuery:
         if self.with_dnssec:
             self.include_raw = True
 
-        self.servers = resolv.decode_servers(self.servers)
+        self.root_mode, self.servers = resolv.decode_servers(self.servers)
         self.svr_ports = [misc.get_port(svr) for svr in self.servers]
         for svr, port in self.svr_ports:
             if svr is None or not validation.is_valid_server(svr):
